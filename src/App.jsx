@@ -1,4 +1,4 @@
-import Navbar from './components/Navbar.jsx'
+import Navbar from './components/NavBar.jsx'
 import Hero from './components/Hero.jsx'
 import Experience from './components/Experience.jsx'
 import Menu from './components/Menu.jsx'
