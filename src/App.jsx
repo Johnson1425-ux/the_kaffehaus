@@ -1,11 +1,11 @@
-import Navbar from './components/Navbar'
-import Hero from './components/Hero'
-import Experience from './components/Experience'
-import Menu from './components/Menu'
-import Ambience from './components/Ambience'
-import Reviews from './components/Reviews'
-import Reserve from './components/Reserve'
-import Footer from './components/Footer'
+import Navbar from './components/Navbar.jsx'
+import Hero from './components/Hero.jsx'
+import Experience from './components/Experience.jsx'
+import Menu from './components/Menu.jsx'
+import Ambience from './components/Ambience.jsx'
+import Reviews from './components/Reviews.jsx'
+import Reserve from './components/Reserve.jsx'
+import Footer from './components/Footer.jsx'
 
 export default function App() {
   return (
