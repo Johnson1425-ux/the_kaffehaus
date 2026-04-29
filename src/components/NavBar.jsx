@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import logo from '../assets/images/logo.jpg'
+import logo from '../assets/images/logo.JPG'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)

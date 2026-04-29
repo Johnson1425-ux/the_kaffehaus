@@ -1,9 +1,9 @@
 import { useReveal } from '../hooks/useReveal'
 import signatureDish from '../assets/images/signature_dish.jpg'
-import interiorDesign from '../assets/images/interior_design.jpg'
-import moreInterior from '../assets/images/more_interior.jpg'
-import vegetablePizza from '../assets/images/vegetable_pizza.jpg'
-import coffee from '../assets/images/coffee.png'
+import interiorDesign from '../assets/images/interior_design.JPG'
+import moreInterior from '../assets/images/more_interior.JPG'
+import vegetablePizza from '../assets/images/vegetable_pizza.JPG'
+import coffee from '../assets/images/coffee.PNG'
 
 const moods = [
   {

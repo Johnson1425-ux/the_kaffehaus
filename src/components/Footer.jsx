@@ -1,6 +1,6 @@
-import mpesaLogo from '../assets/images/mpesa_logo.png'
-import yasLogo from '../assets/images/mixx_by_yas.png'
-import airtelMoneyLogo from '../assets/images/airtelmoney.png'
+import mpesaLogo from '../assets/images/mpesa_logo.PNG'
+import yasLogo from '../assets/images/mixx_by_yas.PNG'
+import airtelMoneyLogo from '../assets/images/airtelmoney.PNG'
 
 export default function Footer() {
   const scrollTo = (href) => {
