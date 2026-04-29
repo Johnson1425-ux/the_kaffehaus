@@ -9,28 +9,87 @@ export default function Footer() {
   }
 
   return (
-    <footer className="border-t border-gold-500/10 pt-16 pb-8 px-6">
-      <div className="max-w-7xl mx-auto">
+    <footer style={{ background: '#2a1c0b', color: '#c4a882' }}>
+
+      {/* Top ornate border */}
+      <div style={{
+        height: '4px',
+        background: 'linear-gradient(to right, #2a1c0b, #9a7a3a 25%, #c9a84c 50%, #9a7a3a 75%, #2a1c0b)',
+      }} />
+
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '4rem 1.5rem 2rem' }}>
+
+        {/* Top divider with ornament */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '3.5rem' }}>
+          <div style={{ flex: 1, height: '1px', background: 'rgba(154,122,58,0.25)' }} />
+          <span style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: '1rem', color: 'rgba(154,122,58,0.5)', letterSpacing: '0.2em' }}>
+            ❧ ✦ ❧
+          </span>
+          <div style={{ flex: 1, height: '1px', background: 'rgba(154,122,58,0.25)' }} />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-14">
 
           {/* Brand */}
           <div className="md:col-span-2">
-            <div className="font-serif text-xl tracking-widest text-gradient-gold mb-4">
-              The Kaffeehaus & Restaurant
+            <div style={{
+              fontFamily: '"Cormorant Garamond", Georgia, serif',
+              fontSize: '1.5rem',
+              fontWeight: 300,
+              letterSpacing: '0.15em',
+              color: '#c9a84c',
+              marginBottom: '0.25rem',
+            }}>
+              The Kaffeehaus
             </div>
-            <p className="font-sans font-light text-xs text-stone-600 leading-relaxed max-w-xs mb-6">
+            <div style={{
+              fontFamily: '"Libre Baskerville", Georgia, serif',
+              fontSize: '0.55rem',
+              letterSpacing: '0.3em',
+              textTransform: 'uppercase',
+              color: 'rgba(154,122,58,0.6)',
+              marginBottom: '1.25rem',
+            }}>
+              & Restaurant · Est. Mwanza
+            </div>
+
+            <p style={{
+              fontFamily: '"Crimson Text", Georgia, serif',
+              fontSize: '1rem',
+              fontStyle: 'italic',
+              color: 'rgba(196,168,130,0.6)',
+              lineHeight: 1.7,
+              maxWidth: '320px',
+              marginBottom: '1.5rem',
+            }}>
               A sanctuary of flavour and atmosphere in the heart of Mwanza. Premium experience without premium pretension.
             </p>
+
             {/* Social links */}
-            <div className="flex gap-2.5">
-              {['Instagram', 'Facebook', 'TripAdvisor'].map((s) => (
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {[
+                { name: 'Instagram', href: 'https://instagram.com/thekaffeehaustz' },
+                { name: 'Tiktok', href: 'https://tiktok.com/@thekaffeehaustz' },
+                { name: 'Piki', href: 'https://legacy.piki.co.tz/the_kaffeehaus_restaurant' }
+              ].map((s) => (
                 <a
                   key={s}
-                  href="#"
-                  className="font-sans text-[10px] tracking-widest uppercase text-stone-600 hover:text-gold-400 transition-colors border border-stone-800 hover:border-gold-500/25 px-2.5 py-1.5 rounded-sm"
+                  href={s.href}
+                  style={{
+                    fontFamily: '"Libre Baskerville", Georgia, serif',
+                    fontSize: '0.55rem',
+                    letterSpacing: '0.2em',
+                    textTransform: 'uppercase',
+                    color: 'rgba(196,168,130,0.5)',
+                    border: '1px solid rgba(154,122,58,0.2)',
+                    padding: '0.4rem 0.75rem',
+                    textDecoration: 'none',
+                    transition: 'all 0.25s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.color = '#c9a84c'; e.currentTarget.style.borderColor = 'rgba(201,168,76,0.5)' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'rgba(196,168,130,0.5)'; e.currentTarget.style.borderColor = 'rgba(154,122,58,0.2)' }}
                 >
-                  {s}
+                  {s.name}
                 </a>
               ))}
             </div>
@@ -38,89 +97,219 @@ export default function Footer() {
 
           {/* Hours */}
           <div>
-            <h4 className="font-sans text-[10px] tracking-[0.25em] uppercase text-stone-400 mb-5">Opening Hours</h4>
-            <ul className="space-y-2.5 font-sans text-xs text-stone-600">
-              <li className="flex justify-between gap-4">
-                <span>Mon – Fri</span>
-                <span className="text-stone-400">07:00 – 23:00</span>
-              </li>
-              <li className="flex justify-between gap-4">
-                <span>Saturday</span>
-                <span className="text-stone-400">08:00 – 00:00</span>
-              </li>
-              <li className="flex justify-between gap-4">
-                <span>Sunday</span>
-                <span className="text-stone-400">09:00 – 22:00</span>
-              </li>
+            <h4 style={{
+              fontFamily: '"Libre Baskerville", Georgia, serif',
+              fontSize: '0.6rem',
+              letterSpacing: '0.25em',
+              textTransform: 'uppercase',
+              color: '#9a7a3a',
+              marginBottom: '1.25rem',
+            }}>
+              Opening Hours
+            </h4>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {[
+                ['Mon – Fri', '07:00 – 23:00'],
+                ['Saturday', '08:00 – 00:00'],
+                ['Sunday', '09:00 – 22:00'],
+              ].map(([day, hours]) => (
+                <li key={day} style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
+                  <span style={{ fontFamily: '"Crimson Text", Georgia, serif', fontSize: '1rem', color: 'rgba(196,168,130,0.5)' }}>{day}</span>
+                  <span style={{ fontFamily: '"Crimson Text", Georgia, serif', fontSize: '1rem', color: 'rgba(196,168,130,0.8)' }}>{hours}</span>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* Contact */}
           <div>
-            <h4 className="font-sans text-[10px] tracking-[0.25em] uppercase text-stone-400 mb-5">Contact</h4>
-            <ul className="space-y-3 font-sans text-xs text-stone-600">
-              <li className="flex items-start gap-2">
-                <span className="text-gold-400/50 flex-shrink-0 mt-px">📍</span>
-                <span>Kirumba, Mwanza<br />Tanzania</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-gold-400/50 flex-shrink-0">📞</span>
-                <a href="tel:+255792975601" className="hover:text-gold-400 transition-colors duration-200">
-                  +255 792 975 601
-                </a>
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-gold-400/50 flex-shrink-0">📱</span>
-                <span>WhatsApp reservations available</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-gold-400/50 flex-shrink-0">💳</span>
-                <span>Cash &amp; mobile money accepted</span>
-              </li>
+            <h4 style={{
+              fontFamily: '"Libre Baskerville", Georgia, serif',
+              fontSize: '0.6rem',
+              letterSpacing: '0.25em',
+              textTransform: 'uppercase',
+              color: '#9a7a3a',
+              marginBottom: '1.25rem',
+            }}>
+              Contact
+            </h4>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {[
+                { icon: '◉', content: 'Kirumba, Mwanza\nTanzania' },
+                { icon: '◎', content: '+255 792 975 601', href: 'tel:+255792975601' },
+                { icon: '◈', content: 'WhatsApp reservations available' },
+                { icon: '◇', content: 'Cash & mobile money accepted' },
+              ].map((item, i) => (
+                <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+                  <span style={{ color: 'rgba(154,122,58,0.5)', fontSize: '0.7rem', marginTop: '3px', flexShrink: 0 }}>{item.icon}</span>
+                  {item.href ? (
+                    <a href={item.href} style={{
+                      fontFamily: '"Crimson Text", Georgia, serif',
+                      fontSize: '1rem',
+                      color: 'rgba(196,168,130,0.6)',
+                      textDecoration: 'none',
+                      transition: 'color 0.2s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.color = '#c9a84c'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(196,168,130,0.6)'}
+                    >
+                      {item.content}
+                    </a>
+                  ) : (
+                    <span style={{
+                      fontFamily: '"Crimson Text", Georgia, serif',
+                      fontSize: '1rem',
+                      color: 'rgba(196,168,130,0.6)',
+                      whiteSpace: 'pre-line',
+                    }}>
+                      {item.content}
+                    </span>
+                  )}
+                </li>
+              ))}
             </ul>
           </div>
         </div>
 
         {/* Payment strip */}
-        <div className="border border-gold-500/10 p-5 mb-10 flex flex-wrap items-center justify-between gap-4 rounded-sm">
-          <p className="font-sans text-[10px] text-stone-600 tracking-widest uppercase">We Accept</p>
-          <div className="flex flex-wrap gap-2.5 items-center">
-            <div className="flex items-center gap-2 px-3 py-2 rounded-sm">
-              <img
-                src={mpesaLogo}
-                alt="M-Pesa"
-                className="h-9 w-9 rounded-full object-cover ring-1 ring-gold-500/30 group-hover:ring-gold-500/60 transition-all duration-300"
-              />
-            </div>
-            <div className="flex items-center gap-2 px-1 py-2 rounded-sm">
-              <img 
-                src={yasLogo}
-                alt="TigoPesa" 
-                className="h-9 w-9 rounded-full object-cover ring-1 ring-gold-500/30 group-hover:ring-gold-500/60 transition-all duration-300"
-              />
-            </div>
-            <div className="flex items-center gap-2 px-3 py-2 rounded-sm">
-              <img
-                src={airtelMoneyLogo}
-                alt="AirtelMoney"
-                className="h-9 w-9 rounded-full object-cover ring-1 ring-gold-500/30 group-hover:ring-gold-500/60 transition-all duration-300"
-              />
-            </div>
-            <div className="flex items-center gap-2 px-3 py-2 bg-stone-900/60 border border-stone-800 rounded-sm">
-              <span className="font-sans text-xs text-stone-400 tracking-wider">CASH (TZS)</span>
+        <div style={{
+          border: '1px solid rgba(154,122,58,0.15)',
+          padding: '1.25rem 1.5rem',
+          marginBottom: '2.5rem',
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1rem',
+          position: 'relative',
+        }}>
+          {/* Inner inset line */}
+          <div style={{
+            position: 'absolute',
+            inset: '4px',
+            border: '1px solid rgba(154,122,58,0.06)',
+            pointerEvents: 'none',
+          }} />
+          <p style={{
+            fontFamily: '"Libre Baskerville", Georgia, serif',
+            fontSize: '0.55rem',
+            letterSpacing: '0.25em',
+            textTransform: 'uppercase',
+            color: 'rgba(154,122,58,0.5)',
+            margin: 0,
+          }}>
+            We Accept
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
+            {[
+              { src: mpesaLogo, alt: 'M-Pesa' },
+              { src: yasLogo, alt: 'Mixx by Yas' },
+              { src: airtelMoneyLogo, alt: 'Airtel Money' },
+            ].map(({ src, alt }) => (
+              <div key={alt} style={{ padding: '0.5rem' }}>
+                <img
+                  src={src}
+                  alt={alt}
+                  style={{
+                    height: '36px',
+                    width: '36px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    border: '1px solid rgba(154,122,58,0.3)',
+                    display: 'block',
+                  }}
+                />
+              </div>
+            ))}
+            <div style={{
+              padding: '0.4rem 0.75rem',
+              border: '1px solid rgba(154,122,58,0.2)',
+              background: 'rgba(154,122,58,0.05)',
+            }}>
+              <span style={{
+                fontFamily: '"Libre Baskerville", Georgia, serif',
+                fontSize: '0.55rem',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                color: 'rgba(196,168,130,0.6)',
+              }}>
+                CASH (TZS)
+              </span>
             </div>
           </div>
         </div>
 
+        {/* Bottom nav links */}
+        <div style={{
+          borderTop: '1px solid rgba(154,122,58,0.12)',
+          paddingTop: '2rem',
+          marginBottom: '1.5rem',
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          gap: '2rem',
+        }}>
+          {[
+            { label: 'Experience', href: '#experience' },
+            { label: 'Menu', href: '#menu' },
+            { label: 'Ambience', href: '#ambience' },
+            { label: 'Reviews', href: '#reviews' },
+            { label: 'Reserve', href: '#reserve' },
+          ].map(({ label, href }) => (
+            <button
+              key={label}
+              onClick={() => scrollTo(href)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: '"Libre Baskerville", Georgia, serif',
+                fontSize: '0.6rem',
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                color: 'rgba(154,122,58,0.45)',
+                transition: 'color 0.2s',
+                padding: 0,
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = '#c9a84c'}
+              onMouseLeave={e => e.currentTarget.style.color = 'rgba(154,122,58,0.45)'}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         {/* Bottom bar */}
-        <div className="border-t border-gold-500/8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="font-sans text-xs text-stone-700 tracking-wider">
+        <div style={{
+          borderTop: '1px solid rgba(154,122,58,0.08)',
+          paddingTop: '1.5rem',
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '0.5rem',
+        }}>
+          <p style={{
+            fontFamily: '"Crimson Text", Georgia, serif',
+            fontSize: '0.85rem',
+            fontStyle: 'italic',
+            color: 'rgba(154,122,58,0.3)',
+            margin: 0,
+          }}>
             © {new Date().getFullYear()} The Kaffeehaus & Restaurant. All rights reserved.
           </p>
-          <p className="font-sans text-xs text-stone-700 tracking-wider">
+          <p style={{
+            fontFamily: '"Libre Baskerville", Georgia, serif',
+            fontSize: '0.55rem',
+            letterSpacing: '0.25em',
+            textTransform: 'uppercase',
+            color: 'rgba(154,122,58,0.25)',
+            margin: 0,
+          }}>
             Kirumba · Mwanza · Tanzania
           </p>
         </div>
+
       </div>
     </footer>
   )

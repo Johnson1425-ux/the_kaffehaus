@@ -5,7 +5,7 @@ const reviews = [
     name: 'Amani K.',
     origin: 'Dar es Salaam',
     stars: 5,
-    text: 'The atmosphere is like nothing else in the city. Dark, warm, intentional. I came for coffee and stayed for three hours. Worth every shilling.',
+    text: 'The atmosphere is like nothing else in the city. Warm, intentional, unhurried. I came for coffee and stayed for three hours. Worth every shilling.',
   },
   {
     name: 'Sophie M.',
@@ -31,62 +31,135 @@ export default function Reviews() {
   const ref = useReveal()
 
   return (
-    <section id="reviews" className="py-28 px-6 relative bg-gradient-to-b from-transparent via-[#0d0c07]/80 to-transparent">
-      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-gold-600/5 rounded-full blur-[120px] pointer-events-none" />
+    <section id="reviews" className="py-28 px-6 relative" style={{ background: '#f2ebda' }}>
 
       <div ref={ref} className="reveal max-w-7xl mx-auto">
 
         {/* Header */}
-        <div className="text-center mb-20">
-          <div className="inline-flex items-center gap-3 mb-4">
-            <div className="w-6 h-px bg-gold-500/40" />
-            <p className="font-sans text-[10px] tracking-[0.3em] uppercase text-gold-400/70">What Guests Say</p>
-            <div className="w-6 h-px bg-gold-500/40" />
-          </div>
-          <h2 className="font-serif text-4xl md:text-5xl text-stone-100 mb-5 font-normal">
+        <div className="text-center mb-16">
+          <p style={{
+            fontFamily: '"Libre Baskerville", Georgia, serif',
+            fontSize: '0.62rem',
+            letterSpacing: '0.35em',
+            textTransform: 'uppercase',
+            color: '#9a7a3a',
+            marginBottom: '1rem',
+          }}>
+            What Guests Say
+          </p>
+          <h2 style={{
+            fontFamily: '"Cormorant Garamond", Georgia, serif',
+            fontSize: 'clamp(2.2rem, 5vw, 3.5rem)',
+            fontWeight: 300,
+            color: '#2a1c0b',
+            marginBottom: '0.4rem',
+          }}>
             Trusted by Locals,
-            <br />
-            <em className="text-gradient-gold not-italic">Loved by the World</em>
           </h2>
-          <div className="w-16 h-px bg-gradient-to-r from-transparent via-gold-500/50 to-transparent mx-auto" />
+          <h2 style={{
+            fontFamily: '"IM Fell English", Georgia, serif',
+            fontSize: 'clamp(2rem, 4.5vw, 3rem)',
+            fontStyle: 'italic',
+            color: '#6b4c23',
+            marginBottom: '1.5rem',
+          }}>
+            Loved by the World
+          </h2>
+          <div style={{ width: '60px', height: '1px', background: 'linear-gradient(to right, transparent, #9a7a3a, transparent)', margin: '0 auto' }} />
         </div>
 
         {/* Review cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-14">
-          {reviews.map((r, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-14">
+          {reviews.map((r) => (
             <div
               key={r.name}
-              className="glass-card p-8 hover:border-gold-500/30 rounded-sm transition-all duration-500 flex flex-col group"
+              className="card-classic p-8 flex flex-col"
             >
               {/* Stars */}
-              <div className="flex gap-0.5 mb-5">
+              <div style={{ display: 'flex', gap: '2px', marginBottom: '1.25rem' }}>
                 {Array.from({ length: r.stars }).map((_, idx) => (
-                  <span key={idx} className="text-gold-400 text-xs">★</span>
+                  <span key={idx} style={{ color: '#9a7a3a', fontSize: '0.8rem' }}>★</span>
                 ))}
               </div>
 
-              {/* Opening quote mark */}
-              <div className="font-serif text-5xl text-gold-500/15 leading-none mb-2 -mt-2 select-none">"</div>
+              {/* Large opening quote — vintage style */}
+              <div style={{
+                fontFamily: '"Cormorant Garamond", Georgia, serif',
+                fontSize: '5rem',
+                color: 'rgba(154,122,58,0.15)',
+                lineHeight: 0.7,
+                marginBottom: '0.5rem',
+                userSelect: 'none',
+              }}>
+                "
+              </div>
 
-              {/* Quote */}
-              <p className="font-serif italic text-stone-300 text-base leading-relaxed mb-6 flex-1">
+              {/* Quote text */}
+              <p style={{
+                fontFamily: '"Crimson Text", Georgia, serif',
+                fontSize: '1.15rem',
+                fontStyle: 'italic',
+                color: '#3d2a12',
+                lineHeight: 1.7,
+                flex: 1,
+                marginBottom: '1.5rem',
+              }}>
                 {r.text}
               </p>
 
+              {/* Closing flourish */}
+              <div style={{
+                width: '40px',
+                height: '1px',
+                background: 'linear-gradient(to right, rgba(154,122,58,0.4), transparent)',
+                marginBottom: '1rem',
+              }} />
+
               {/* Author */}
-              <div className="flex items-center gap-3 border-t border-gold-500/8 pt-5">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gold-600/30 to-amber-900/30 flex items-center justify-center text-gold-400 font-serif text-sm font-semibold border border-gold-500/20 flex-shrink-0">
-                  {r.name[0]}
+              <div style={{
+                borderTop: '1px solid rgba(139,115,85,0.15)',
+                paddingTop: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+              }}>
+                {/* Initials circle — vintage stamp style */}
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  border: '1px solid rgba(154,122,58,0.5)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  background: 'rgba(154,122,58,0.06)',
+                }}>
+                  <span style={{
+                    fontFamily: '"Cormorant Garamond", Georgia, serif',
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    color: '#9a7a3a',
+                  }}>
+                    {r.name[0]}
+                  </span>
                 </div>
                 <div>
-                  <div className="font-sans text-sm text-stone-200 font-medium">{r.name}</div>
-                  <div className="font-sans text-xs text-stone-600 tracking-wider">{r.origin}</div>
-                </div>
-                <div className="ml-auto">
-                  <div className="flex gap-0.5">
-                    {Array.from({ length: r.stars }).map((_, idx) => (
-                      <span key={idx} className="text-gold-400/40 text-[9px]">★</span>
-                    ))}
+                  <div style={{
+                    fontFamily: '"Libre Baskerville", Georgia, serif',
+                    fontSize: '0.75rem',
+                    color: '#3d2a12',
+                    fontWeight: 700,
+                  }}>
+                    {r.name}
+                  </div>
+                  <div style={{
+                    fontFamily: '"Crimson Text", Georgia, serif',
+                    fontSize: '0.9rem',
+                    color: '#a08c6b',
+                    fontStyle: 'italic',
+                  }}>
+                    {r.origin}
                   </div>
                 </div>
               </div>
@@ -95,29 +168,57 @@ export default function Reviews() {
         </div>
 
         {/* Trust strip */}
-        <div className="border border-gold-500/12 rounded-sm overflow-hidden">
-          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gold-500/10">
-            <div className="p-8 text-center">
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <span className="flex items-center gap-2 px-3 py-1.5 bg-red-950/40 border border-red-900/30 font-sans text-sm text-red-300 font-bold tracking-wider">
-                  🔴 M-PESA
-                </span>
-                <span className="font-sans text-sm text-stone-500">+ Cash</span>
+        <div style={{
+          border: '1px solid rgba(139,115,85,0.2)',
+          background: '#faf6ed',
+          position: 'relative',
+        }}>
+          <div style={{
+            position: 'absolute',
+            inset: '4px',
+            border: '1px solid rgba(139,115,85,0.1)',
+            pointerEvents: 'none',
+          }} />
+          <div className="grid grid-cols-1 md:grid-cols-3">
+            {[
+              { heading: 'M-Pesa & Cash', sub: 'Payments Accepted' },
+              { heading: 'Freshly Prepared', sub: 'Every Meal, Every Time' },
+              { heading: 'Groups Welcome', sub: 'Private Tables Available' },
+            ].map((item, i) => (
+              <div
+                key={item.heading}
+                className="text-center py-8 px-6"
+                style={{
+                  borderRight: i < 2 ? '1px solid rgba(139,115,85,0.15)' : 'none',
+                  borderBottom: '0',
+                }}
+              >
+                <div style={{
+                  fontFamily: '"Cormorant Garamond", Georgia, serif',
+                  fontSize: '1.5rem',
+                  fontWeight: 400,
+                  color: '#6b4c23',
+                  marginBottom: '0.4rem',
+                }}>
+                  {item.heading}
+                </div>
+                <div style={{
+                  fontFamily: '"Libre Baskerville", Georgia, serif',
+                  fontSize: '0.6rem',
+                  letterSpacing: '0.2em',
+                  textTransform: 'uppercase',
+                  color: '#a08c6b',
+                }}>
+                  {item.sub}
+                </div>
               </div>
-              <p className="font-sans text-[10px] text-stone-600 tracking-[0.2em] uppercase">Payments Accepted</p>
-            </div>
-            <div className="p-8 text-center">
-              <div className="font-serif text-2xl text-gradient-gold mb-2 font-normal">Freshly Prepared</div>
-              <p className="font-sans text-[10px] text-stone-600 tracking-[0.2em] uppercase">Every Meal, Every Time</p>
-            </div>
-            <div className="p-8 text-center">
-              <div className="font-serif text-2xl text-gradient-gold mb-2 font-normal">Groups Welcome</div>
-              <p className="font-sans text-[10px] text-stone-600 tracking-[0.2em] uppercase">Private Tables Available</p>
-            </div>
+            ))}
           </div>
         </div>
 
       </div>
+
+      <div className="section-divider max-w-4xl mx-auto mt-20" />
     </section>
   )
 }

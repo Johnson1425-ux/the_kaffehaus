@@ -1,37 +1,55 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ['./index.html', './src/**/*.{js,jsx}'],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
-      fontFamily: {
-        serif: ['Inter', 'serif'],
-        sans: ['Inter', 'sans-serif'],
-      },
       colors: {
-        gold: {
-          300: '#f0d080',
-          400: '#e6c040',
-          500: '#d4a017',
-          600: '#b8860b',
+        parchment: {
+          50:  '#fdf8f0',
+          100: '#f9efd8',
+          200: '#f3ddb0',
+          300: '#e8c87a',
+          400: '#d4a843',
+          500: '#b8892a',
+          600: '#966e1e',
+          700: '#755317',
+          800: '#5a3e12',
+          900: '#3d2a0c',
         },
-        charcoal: {
-          800: '#1a1a1a',
-          900: '#0d0d0d',
+        espresso: {
+          50:  '#f5f0e8',
+          100: '#e8ddc8',
+          200: '#d4bb94',
+          300: '#b8935a',
+          400: '#8b6635',
+          500: '#6b4c23',
+          600: '#52391a',
+          700: '#3d2a12',
+          800: '#2a1c0b',
+          900: '#1a1008',
         },
+        ink: {
+          50:  '#f2ede6',
+          100: '#ddd4c4',
+          200: '#c4b59c',
+          300: '#a08c6b',
+          400: '#7d6640',
+          500: '#5e4b2a',
+          600: '#453519',
+          700: '#30240f',
+          800: '#1e160a',
+          900: '#100c05',
+        },
+        cream: '#faf6ed',
+        vellum: '#f2ebda',
+        sepia: '#8b7355',
+        aged: '#c4a882',
       },
-      animation: {
-        'fade-up': 'fadeUp 0.7s ease forwards',
-        'fade-in': 'fadeIn 1s ease forwards',
-      },
-      keyframes: {
-        fadeUp: {
-          '0%': { opacity: '0', transform: 'translateY(30px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
+      fontFamily: {
+        display: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+        fell: ['"IM Fell English"', 'Georgia', 'serif'],
+        body: ['"Crimson Text"', 'Georgia', 'serif'],
+        caption: ['"Libre Baskerville"', 'Georgia', 'serif'],
       },
     },
   },

@@ -9,7 +9,7 @@ import Footer from './components/Footer'
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-charcoal-900 text-stone-100">
+    <div style={{ minHeight: '100vh', background: '#faf6ed', color: '#2a1c0b' }}>
       <Navbar />
       <Hero />
       <Experience />

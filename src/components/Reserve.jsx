@@ -7,39 +7,51 @@ const DEPOSIT = 5000
 function Steps({ current }) {
   const steps = ['Details', 'Payment', 'Confirmed']
   return (
-    <div className="flex items-center justify-center gap-0 mb-10">
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2.5rem', gap: 0 }}>
       {steps.map((label, i) => {
         const idx = i + 1
         const done = current > idx
         const active = current === idx
         return (
-          <div key={label} className="flex items-center">
-            <div className="flex flex-col items-center">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-sans font-semibold transition-all duration-500 ${
-                  done
-                    ? 'bg-emerald-600 text-white'
-                    : active
-                    ? 'border-2 border-gold-500 text-gold-400 bg-transparent'
-                    : 'border border-stone-700 text-stone-600 bg-transparent'
-                }`}
-              >
+          <div key={label} style={{ display: 'flex', alignItems: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: '"Libre Baskerville", Georgia, serif',
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                border: done ? '1px solid #5a8a3a' : active ? '1px solid #6b4c23' : '1px solid rgba(139,115,85,0.35)',
+                background: done ? 'rgba(90,138,58,0.1)' : active ? 'rgba(107,76,35,0.08)' : 'transparent',
+                color: done ? '#5a8a3a' : active ? '#6b4c23' : '#a08c6b',
+                transition: 'all 0.4s',
+              }}>
                 {done ? '✓' : idx}
               </div>
-              <span
-                className={`mt-1.5 font-sans text-[10px] tracking-wider uppercase ${
-                  active ? 'text-gold-400' : done ? 'text-emerald-500' : 'text-stone-600'
-                }`}
-              >
+              <span style={{
+                fontFamily: '"Libre Baskerville", Georgia, serif',
+                fontSize: '0.55rem',
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                color: done ? '#5a8a3a' : active ? '#6b4c23' : '#a08c6b',
+                marginTop: '6px',
+              }}>
                 {label}
               </span>
             </div>
             {i < steps.length - 1 && (
-              <div
-                className={`w-16 h-px mb-5 mx-1 transition-all duration-500 ${
-                  done ? 'bg-emerald-600/50' : 'bg-stone-800'
-                }`}
-              />
+              <div style={{
+                width: '64px',
+                height: '1px',
+                background: done ? 'rgba(90,138,58,0.4)' : 'rgba(139,115,85,0.2)',
+                margin: '0 4px',
+                marginBottom: '20px',
+                transition: 'all 0.4s',
+              }} />
             )}
           </div>
         )
@@ -48,23 +60,35 @@ function Steps({ current }) {
   )
 }
 
-const inputClass =
-  'w-full bg-transparent border border-gold-500/15 px-4 py-3 font-sans text-sm text-stone-200 placeholder-stone-700 focus:outline-none focus:border-gold-500/50 rounded-sm transition-colors duration-200'
+const inputStyle = {
+  width: '100%',
+  background: 'rgba(250,246,237,0.9)',
+  border: '1px solid rgba(139,115,85,0.3)',
+  padding: '0.75rem 1rem',
+  fontFamily: '"Crimson Text", Georgia, serif',
+  fontSize: '1.05rem',
+  color: '#2a1c0b',
+  outline: 'none',
+  transition: 'border-color 0.25s',
+  boxSizing: 'border-box',
+}
 
-const selectClass =
-  'w-full bg-charcoal-900 border border-gold-500/15 px-4 py-3 font-sans text-sm text-stone-200 focus:outline-none focus:border-gold-500/50 rounded-sm transition-colors duration-200'
-
-const labelClass = 'block font-sans text-[10px] tracking-[0.2em] uppercase text-stone-500 mb-2'
+const labelStyle = {
+  display: 'block',
+  fontFamily: '"Libre Baskerville", Georgia, serif',
+  fontSize: '0.6rem',
+  letterSpacing: '0.2em',
+  textTransform: 'uppercase',
+  color: '#8b7355',
+  marginBottom: '0.5rem',
+}
 
 export default function Reserve() {
   const ref = useReveal()
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({ name: '', phone: '', date: '', time: '', guests: '2', notes: '' })
 
-  const times = [
-    '07:00', '08:00', '09:00', '10:00', '11:00', '12:00',
-    '13:00', '14:00', '18:00', '19:00', '20:00', '21:00', '22:00',
-  ]
+  const times = ['07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','18:00','19:00','20:00','21:00','22:00']
 
   const handleDetailsSubmit = (e) => {
     e.preventDefault()
@@ -76,118 +100,148 @@ export default function Reserve() {
   }
 
   return (
-    <section id="reserve" className="py-28 px-6 relative">
-      {/* Ambient glow */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-amber-950/20 rounded-full blur-[160px]" />
-      </div>
+    <section id="reserve" className="py-28 px-6 relative" style={{ background: '#faf6ed' }}>
 
       <div ref={ref} className="reveal max-w-3xl mx-auto">
 
         {/* Header */}
         <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-3 mb-4">
-            <div className="w-6 h-px bg-gold-500/40" />
-            <p className="font-sans text-[10px] tracking-[0.3em] uppercase text-gold-400/70">Make a Reservation</p>
-            <div className="w-6 h-px bg-gold-500/40" />
-          </div>
-          <h2 className="font-serif text-4xl md:text-5xl text-stone-100 mb-5 font-normal">
+          <p style={{
+            fontFamily: '"Libre Baskerville", Georgia, serif',
+            fontSize: '0.62rem',
+            letterSpacing: '0.35em',
+            textTransform: 'uppercase',
+            color: '#9a7a3a',
+            marginBottom: '1rem',
+          }}>
+            Make a Reservation
+          </p>
+          <h2 style={{
+            fontFamily: '"Cormorant Garamond", Georgia, serif',
+            fontSize: 'clamp(2.2rem, 5vw, 3.5rem)',
+            fontWeight: 300,
+            color: '#2a1c0b',
+            marginBottom: '0.4rem',
+          }}>
             Reserve Your Table
-            <br />
-            <em className="text-gradient-gold not-italic">Tonight</em>
           </h2>
-          <p className="font-sans font-light text-sm text-stone-500 max-w-sm mx-auto leading-relaxed">
+          <h2 style={{
+            fontFamily: '"IM Fell English", Georgia, serif',
+            fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
+            fontStyle: 'italic',
+            color: '#6b4c23',
+            marginBottom: '1rem',
+          }}>
+            Tonight
+          </h2>
+          <p style={{
+            fontFamily: '"Crimson Text", Georgia, serif',
+            fontSize: '1.1rem',
+            fontStyle: 'italic',
+            color: '#8b7355',
+            maxWidth: '380px',
+            margin: '0 auto 1.5rem',
+            lineHeight: 1.6,
+          }}>
             Secure your seat before peak hours fill up. Confirm with a quick M-Pesa deposit — deductible from your bill.
           </p>
-          <div className="w-16 h-px bg-gradient-to-r from-transparent via-gold-500/50 to-transparent mx-auto mt-6" />
+          <div style={{ width: '60px', height: '1px', background: 'linear-gradient(to right, transparent, #9a7a3a, transparent)', margin: '0 auto 1.5rem' }} />
 
           {/* Payment badges */}
-          <div className="flex items-center justify-center gap-2.5 mt-6">
-            <span className="font-sans text-[9px] text-stone-600 tracking-widest uppercase">Accepted:</span>
-            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-red-950/30 border border-red-900/30 font-sans text-xs text-red-300 font-semibold tracking-wider rounded-sm">
-              M-PESA
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: '"Libre Baskerville", Georgia, serif', fontSize: '0.55rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#a08c6b' }}>
+              Accepted:
             </span>
-            <span className="px-3 py-1.5 bg-stone-900/60 border border-stone-800 font-sans text-xs text-stone-400 tracking-wider rounded-sm">
-              CASH
-            </span>
-            <span className="px-3 py-1.5 bg-blue-950/30 border border-blue-900/30 font-sans text-xs text-blue-300 tracking-wider rounded-sm">
-              TIGOPESA
-            </span>
+            {[
+              { label: 'M-PESA', bg: 'rgba(227,24,55,0.06)', border: 'rgba(227,24,55,0.25)', color: '#8b1a1a' },
+              { label: 'CASH', bg: 'rgba(139,115,85,0.08)', border: 'rgba(139,115,85,0.25)', color: '#6b4c23' },
+              { label: 'TIGOPESA', bg: 'rgba(37,99,185,0.06)', border: 'rgba(37,99,185,0.2)', color: '#1a3a6b' },
+            ].map(b => (
+              <span key={b.label} style={{
+                fontFamily: '"Libre Baskerville", Georgia, serif',
+                fontSize: '0.55rem',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                background: b.bg,
+                border: `1px solid ${b.border}`,
+                color: b.color,
+                padding: '0.3rem 0.75rem',
+              }}>
+                {b.label}
+              </span>
+            ))}
           </div>
         </div>
 
-        {/* ── STEP 1: DETAILS ── */}
+        {/* ── STEP 1 ── */}
         {step === 1 && (
-          <form onSubmit={handleDetailsSubmit} className="glass-card p-8 md:p-12 space-y-6 rounded-sm">
+          <form onSubmit={handleDetailsSubmit} className="card-classic p-8 md:p-12" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <Steps current={1} />
 
-            {/* Name + Phone */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
-                <label className={labelClass}>Full Name</label>
-                <input
-                  required
-                  type="text"
-                  placeholder="Your name"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className={inputClass}
+                <label style={labelStyle}>Full Name</label>
+                <input required type="text" placeholder="Your name" value={form.name}
+                  onChange={e => setForm({ ...form, name: e.target.value })}
+                  style={inputStyle}
+                  onFocus={e => e.target.style.borderColor = '#9a7a3a'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(139,115,85,0.3)'}
                 />
               </div>
               <div>
-                <label className={labelClass}>Phone / WhatsApp</label>
-                <input
-                  required
-                  type="tel"
-                  placeholder="+255 ..."
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className={inputClass}
+                <label style={labelStyle}>Phone / WhatsApp</label>
+                <input required type="tel" placeholder="+255 ..." value={form.phone}
+                  onChange={e => setForm({ ...form, phone: e.target.value })}
+                  style={inputStyle}
+                  onFocus={e => e.target.style.borderColor = '#9a7a3a'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(139,115,85,0.3)'}
                 />
               </div>
             </div>
 
-            {/* Date + Time */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
-                <label className={labelClass}>Date</label>
-                <input
-                  required
-                  type="date"
-                  value={form.date}
-                  onChange={(e) => setForm({ ...form, date: e.target.value })}
-                  className={selectClass}
-                  style={{ colorScheme: 'dark' }}
+                <label style={labelStyle}>Date</label>
+                <input required type="date" value={form.date}
+                  onChange={e => setForm({ ...form, date: e.target.value })}
+                  style={{ ...inputStyle, colorScheme: 'light' }}
+                  onFocus={e => e.target.style.borderColor = '#9a7a3a'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(139,115,85,0.3)'}
                 />
               </div>
               <div>
-                <label className={labelClass}>Time</label>
-                <select
-                  required
-                  value={form.time}
-                  onChange={(e) => setForm({ ...form, time: e.target.value })}
-                  className={selectClass}
+                <label style={labelStyle}>Time</label>
+                <select required value={form.time}
+                  onChange={e => setForm({ ...form, time: e.target.value })}
+                  style={{ ...inputStyle, cursor: 'pointer' }}
+                  onFocus={e => e.target.style.borderColor = '#9a7a3a'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(139,115,85,0.3)'}
                 >
                   <option value="">Select time</option>
-                  {times.map((t) => <option key={t} value={t}>{t}</option>)}
+                  {times.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
             </div>
 
-            {/* Guests */}
             <div>
-              <label className={labelClass}>Number of Guests</label>
-              <div className="flex gap-2 flex-wrap mt-1">
-                {['1', '2', '3', '4', '5', '6', '7+'].map((g) => (
+              <label style={labelStyle}>Number of Guests</label>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
+                {['1','2','3','4','5','6','7+'].map(g => (
                   <button
                     key={g}
                     type="button"
                     onClick={() => setForm({ ...form, guests: g })}
-                    className={`w-11 h-11 font-sans text-sm border transition-all duration-200 rounded-sm ${
-                      form.guests === g
-                        ? 'border-gold-500 bg-gold-500/10 text-gold-400'
-                        : 'border-stone-800 text-stone-600 hover:border-stone-600 hover:text-stone-300'
-                    }`}
+                    style={{
+                      width: '44px',
+                      height: '44px',
+                      fontFamily: '"Crimson Text", Georgia, serif',
+                      fontSize: '1rem',
+                      border: form.guests === g ? '1px solid #6b4c23' : '1px solid rgba(139,115,85,0.3)',
+                      background: form.guests === g ? '#6b4c23' : 'transparent',
+                      color: form.guests === g ? '#faf6ed' : '#8b7355',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
                   >
                     {g}
                   </button>
@@ -195,100 +249,157 @@ export default function Reserve() {
               </div>
             </div>
 
-            {/* Notes */}
             <div>
-              <label className={labelClass}>Special Requests <span className="normal-case text-stone-700">(optional)</span></label>
+              <label style={labelStyle}>
+                Special Requests <span style={{ textTransform: 'none', letterSpacing: 0, fontStyle: 'italic', color: '#c4a882' }}>(optional)</span>
+              </label>
               <textarea
                 rows={3}
                 placeholder="Dietary requirements, occasion, preferred seating..."
                 value={form.notes}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                className={`${inputClass} resize-none`}
+                onChange={e => setForm({ ...form, notes: e.target.value })}
+                style={{ ...inputStyle, resize: 'none' }}
+                onFocus={e => e.target.style.borderColor = '#9a7a3a'}
+                onBlur={e => e.target.style.borderColor = 'rgba(139,115,85,0.3)'}
               />
             </div>
 
             {/* Deposit notice */}
-            <div className="flex items-start gap-3 bg-emerald-950/20 border border-emerald-900/30 p-4 rounded-sm">
-              <span className="text-emerald-500 text-lg mt-0.5 flex-shrink-0">📱</span>
-              <p className="font-sans text-xs text-stone-400 leading-relaxed">
-                A <strong className="text-emerald-400">TZS {DEPOSIT.toLocaleString()} M-Pesa deposit</strong> is required to hold your table. It will be deducted from your final bill.
+            <div style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.75rem',
+              background: 'rgba(90,138,58,0.05)',
+              border: '1px solid rgba(90,138,58,0.2)',
+              padding: '1rem',
+            }}>
+              <span style={{ color: '#5a8a3a', fontSize: '1rem', flexShrink: 0, marginTop: '2px' }}>✦</span>
+              <p style={{
+                fontFamily: '"Crimson Text", Georgia, serif',
+                fontSize: '1rem',
+                color: '#5e4b2a',
+                lineHeight: 1.5,
+                margin: 0,
+              }}>
+                A <strong style={{ color: '#5a8a3a', fontWeight: 600 }}>TZS {DEPOSIT.toLocaleString()} M-Pesa deposit</strong> is required to hold your table. It will be deducted from your final bill.
               </p>
             </div>
 
-            {/* Submit */}
-            <button
-              type="submit"
-              className="w-full py-4 bg-emerald-600 text-white font-sans font-semibold text-xs tracking-[0.2em] uppercase hover:bg-emerald-500 active:scale-[0.99] transition-all duration-300 shadow-lg shadow-emerald-900/30 rounded-sm flex items-center justify-center gap-3"
-            >
-              <span>Continue to M-Pesa Payment</span>
-              <span className="text-base">→</span>
+            <button type="submit" className="btn-primary w-full py-4" style={{ fontSize: '0.7rem' }}>
+              Continue to M-Pesa Payment →
             </button>
 
-            <p className="text-center font-sans text-xs text-stone-700 tracking-wider">
+            <p style={{
+              textAlign: 'center',
+              fontFamily: '"Crimson Text", Georgia, serif',
+              fontSize: '0.85rem',
+              fontStyle: 'italic',
+              color: '#a08c6b',
+            }}>
               Powered by Vodacom M-Pesa · Secure · Instant confirmation
             </p>
           </form>
         )}
 
-        {/* ── STEP 2: M-PESA ── */}
+        {/* ── STEP 2 ── */}
         {step === 2 && (
-          <MPesaPayment
-            reservation={form}
-            onBack={() => setStep(1)}
-            onComplete={() => setStep(3)}
-          />
+          <MPesaPayment reservation={form} onBack={() => setStep(1)} onComplete={() => setStep(3)} />
         )}
 
-        {/* ── STEP 3: CONFIRMED ── */}
+        {/* ── STEP 3 ── */}
         {step === 3 && (
-          <div className="glass-card p-8 md:p-12 rounded-sm">
+          <div className="card-classic p-8 md:p-12 text-center">
             <Steps current={3} />
-            <div className="text-center space-y-6">
-              <div className="font-serif text-5xl text-gradient-gold">✦</div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
+              <div style={{
+                fontFamily: '"Cormorant Garamond", Georgia, serif',
+                fontSize: '3rem',
+                color: '#9a7a3a',
+                lineHeight: 1,
+              }}>
+                ❧
+              </div>
               <div>
-                <p className="font-sans text-[10px] tracking-[0.3em] uppercase text-emerald-500/80 mb-2">
+                <p style={{
+                  fontFamily: '"Libre Baskerville", Georgia, serif',
+                  fontSize: '0.6rem',
+                  letterSpacing: '0.3em',
+                  textTransform: 'uppercase',
+                  color: '#5a8a3a',
+                  marginBottom: '0.75rem',
+                }}>
                   Reservation Confirmed
                 </p>
-                <h3 className="font-serif text-3xl text-stone-100 mb-3 font-normal">
+                <h3 style={{
+                  fontFamily: '"Cormorant Garamond", Georgia, serif',
+                  fontSize: '2.2rem',
+                  fontWeight: 300,
+                  color: '#2a1c0b',
+                  marginBottom: '0.25rem',
+                }}>
                   Welcome,{' '}
-                  <em className="text-gradient-gold not-italic">{form.name}</em>
+                  <em style={{ fontFamily: '"IM Fell English", Georgia, serif', color: '#6b4c23' }}>{form.name}</em>
                 </h3>
-                <p className="font-sans font-light text-stone-500 text-sm leading-relaxed max-w-sm mx-auto">
+                <p style={{
+                  fontFamily: '"Crimson Text", Georgia, serif',
+                  fontSize: '1.05rem',
+                  fontStyle: 'italic',
+                  color: '#7d6640',
+                  maxWidth: '380px',
+                  margin: '0 auto',
+                  lineHeight: 1.6,
+                }}>
                   Your table at The Kaffeehaus is confirmed for{' '}
-                  <strong className="text-stone-300">{form.date}</strong> at{' '}
-                  <strong className="text-stone-300">{form.time}</strong> for{' '}
-                  <strong className="text-stone-300">{form.guests} guest{form.guests !== '1' ? 's' : ''}</strong>.
+                  <strong style={{ color: '#3d2a12', fontStyle: 'normal' }}>{form.date}</strong> at{' '}
+                  <strong style={{ color: '#3d2a12', fontStyle: 'normal' }}>{form.time}</strong> for{' '}
+                  <strong style={{ color: '#3d2a12', fontStyle: 'normal' }}>{form.guests} guest{form.guests !== '1' ? 's' : ''}</strong>.
                 </p>
               </div>
 
-              {/* Summary card */}
-              <div className="bg-stone-900/60 border border-gold-500/10 p-6 text-left space-y-3 max-w-sm mx-auto rounded-sm">
-                <div className="flex justify-between font-sans text-sm">
-                  <span className="text-stone-500">Deposit paid</span>
-                  <span className="text-emerald-400">TZS {DEPOSIT.toLocaleString()} ✓</span>
-                </div>
-                <div className="flex justify-between font-sans text-sm">
-                  <span className="text-stone-500">Payment method</span>
-                  <span className="text-stone-300">M-Pesa</span>
-                </div>
-                {form.notes && (
-                  <div className="flex justify-between font-sans text-sm gap-4">
-                    <span className="text-stone-500 flex-shrink-0">Special request</span>
-                    <span className="text-stone-300 text-right">{form.notes}</span>
+              {/* Summary */}
+              <div style={{
+                background: '#f2ebda',
+                border: '1px solid rgba(139,115,85,0.2)',
+                padding: '1.5rem',
+                maxWidth: '340px',
+                width: '100%',
+                textAlign: 'left',
+              }}>
+                {[
+                  ['Deposit paid', `TZS ${DEPOSIT.toLocaleString()} ✓`, '#5a8a3a'],
+                  ['Payment method', 'M-Pesa', '#3d2a12'],
+                  ...(form.notes ? [['Special request', form.notes, '#3d2a12']] : []),
+                ].map(([key, val, valColor]) => (
+                  <div key={key} style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '0.5rem' }}>
+                    <span style={{ fontFamily: '"Crimson Text", Georgia, serif', fontSize: '1rem', color: '#8b7355' }}>{key}</span>
+                    <span style={{ fontFamily: '"Crimson Text", Georgia, serif', fontSize: '1rem', color: valColor, textAlign: 'right' }}>{val}</span>
                   </div>
-                )}
+                ))}
               </div>
 
-              <p className="font-sans text-xs text-stone-600 italic">
+              <p style={{
+                fontFamily: '"Crimson Text", Georgia, serif',
+                fontSize: '0.9rem',
+                fontStyle: 'italic',
+                color: '#a08c6b',
+              }}>
                 A confirmation SMS has been sent to {form.phone}. We look forward to welcoming you.
               </p>
 
               <button
-                onClick={() => {
-                  setStep(1)
-                  setForm({ name: '', phone: '', date: '', time: '', guests: '2', notes: '' })
+                onClick={() => { setStep(1); setForm({ name: '', phone: '', date: '', time: '', guests: '2', notes: '' }) }}
+                style={{
+                  fontFamily: '"Libre Baskerville", Georgia, serif',
+                  fontSize: '0.6rem',
+                  letterSpacing: '0.2em',
+                  textTransform: 'uppercase',
+                  color: '#9a7a3a',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  textUnderlineOffset: '3px',
                 }}
-                className="font-sans text-xs text-gold-400/50 hover:text-gold-400 tracking-[0.2em] uppercase transition-colors duration-200"
               >
                 Make Another Reservation
               </button>

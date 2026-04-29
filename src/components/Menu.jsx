@@ -11,7 +11,7 @@ const dishes = [
     desc: 'Slow-seared to perfection, served with aromatic herbs and a rich reduction sauce.',
     price: 'TZS 35,000',
     note: "Chef's favourite",
-    emoji: '🥩',
+    numeral: 'I',
     featured: true,
   },
   {
@@ -21,7 +21,7 @@ const dishes = [
     desc: 'Fresh catch of the day, slow-cooked in coconut milk with fragrant coastal spices.',
     price: 'TZS 22,000',
     note: 'Loved by regulars',
-    emoji: '🍲',
+    numeral: 'II',
   },
   {
     name: 'Signature Cold Brew',
@@ -30,7 +30,7 @@ const dishes = [
     desc: 'House-crafted cold brew, steeped 18 hours for a smooth, velvety depth.',
     price: 'TZS 10,000',
     note: 'Premium without the price',
-    emoji: '☕',
+    numeral: 'III',
   },
   {
     name: 'The Kaffeehaus Brunch Board',
@@ -39,7 +39,7 @@ const dishes = [
     desc: 'A curated spread of house-baked bread, seasonal fruits, artisan cheeses and preserves.',
     price: 'TZS 28,000',
     note: 'Perfect for groups',
-    emoji: '🧀',
+    numeral: 'IV',
   },
   {
     name: 'Pilau ya Nyama',
@@ -48,7 +48,7 @@ const dishes = [
     desc: 'Fragrant spiced rice with slow-braised meat — a beloved Tanzanian classic elevated.',
     price: 'TZS 18,000',
     note: 'Most ordered dish',
-    emoji: '🍛',
+    numeral: 'V',
     featured: true,
   },
   {
@@ -58,36 +58,61 @@ const dishes = [
     desc: 'Velvety Belgian chocolate mousse with a hint of cardamom and gold leaf garnish.',
     price: 'TZS 14,000',
     note: 'Worth saving room for',
-    emoji: '🍫',
+    numeral: 'VI',
   },
 ]
 
 export default function Menu() {
   const ref = useReveal()
   const [active, setActive] = useState('All')
-
   const filtered = active === 'All' ? dishes : dishes.filter((d) => d.category === active)
 
   return (
-    <section id="menu" className="py-28 px-6 relative bg-gradient-to-b from-transparent via-[#0f0e08]/60 to-transparent">
-      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-amber-900/8 rounded-full blur-[150px] pointer-events-none" />
-
+    <section id="menu" className="py-28 px-6 relative" style={{ background: '#f2ebda' }}>
       <div ref={ref} className="reveal max-w-7xl mx-auto">
 
         {/* Header */}
         <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-3 mb-4">
-            <div className="w-6 h-px bg-gold-500/40" />
-            <p className="font-sans text-[10px] tracking-[0.3em] uppercase text-gold-400/70">Signature Dishes</p>
-            <div className="w-6 h-px bg-gold-500/40" />
-          </div>
-          <h2 className="font-serif text-4xl md:text-5xl text-stone-100 mb-5 font-normal">
-            Crafted to <em className="text-gradient-gold not-italic">Captivate</em>
+          <p style={{
+            fontFamily: '"Libre Baskerville", Georgia, serif',
+            fontSize: '0.62rem',
+            letterSpacing: '0.35em',
+            textTransform: 'uppercase',
+            color: '#9a7a3a',
+            marginBottom: '1rem',
+          }}>
+            Signature Dishes
+          </p>
+          <h2 style={{
+            fontFamily: '"Cormorant Garamond", Georgia, serif',
+            fontSize: 'clamp(2.2rem, 5vw, 3.5rem)',
+            fontWeight: 300,
+            color: '#2a1c0b',
+            marginBottom: '0.4rem',
+          }}>
+            Crafted to
           </h2>
-          <p className="font-sans font-light text-stone-500 max-w-sm mx-auto text-sm leading-relaxed">
+          <h2 style={{
+            fontFamily: '"IM Fell English", Georgia, serif',
+            fontSize: 'clamp(2rem, 4.5vw, 3rem)',
+            fontStyle: 'italic',
+            color: '#6b4c23',
+            marginBottom: '1rem',
+          }}>
+            Captivate
+          </h2>
+          <p style={{
+            fontFamily: '"Crimson Text", Georgia, serif',
+            fontSize: '1.1rem',
+            fontStyle: 'italic',
+            color: '#8b7355',
+            maxWidth: '380px',
+            margin: '0 auto 1.5rem',
+            lineHeight: 1.6,
+          }}>
             Every plate is a conversation between tradition and refinement. Freshly prepared — worth the wait.
           </p>
-          <div className="w-16 h-px bg-gradient-to-r from-transparent via-gold-500/50 to-transparent mx-auto mt-6" />
+          <div style={{ width: '60px', height: '1px', background: 'linear-gradient(to right, transparent, #9a7a3a, transparent)', margin: '0 auto' }} />
         </div>
 
         {/* Category filter */}
@@ -96,11 +121,18 @@ export default function Menu() {
             <button
               key={cat}
               onClick={() => setActive(cat)}
-              className={`font-sans text-[10px] tracking-[0.2em] uppercase px-4 py-2 border transition-all duration-300 rounded-sm ${
-                active === cat
-                  ? 'border-gold-500 text-gold-400 bg-gold-500/8'
-                  : 'border-stone-800 text-stone-500 hover:border-stone-600 hover:text-stone-300'
-              }`}
+              style={{
+                fontFamily: '"Libre Baskerville", Georgia, serif',
+                fontSize: '0.6rem',
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                padding: '0.5rem 1.25rem',
+                border: active === cat ? '1px solid #6b4c23' : '1px solid rgba(139,115,85,0.3)',
+                background: active === cat ? '#6b4c23' : 'transparent',
+                color: active === cat ? '#faf6ed' : '#8b7355',
+                cursor: 'pointer',
+                transition: 'all 0.25s',
+              }}
             >
               {cat}
             </button>
@@ -108,38 +140,102 @@ export default function Menu() {
         </div>
 
         {/* Dishes grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filtered.map((d) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filtered.map((d, i) => (
             <div
               key={d.name}
-              className={`glass-card p-7 group hover:border-gold-500/35 rounded-sm transition-all duration-500 flex flex-col relative overflow-hidden ${
-                d.featured ? 'border-gold-500/20' : ''
-              }`}
+              className="card-classic p-7 flex flex-col relative transition-all duration-300"
+              style={{
+                border: d.featured ? '1px solid rgba(154,122,58,0.4)' : undefined,
+                animationDelay: `${i * 50}ms`,
+              }}
             >
-              {/* Featured badge */}
+              {/* Featured ribbon */}
               {d.featured && (
-                <div className="absolute top-0 right-0 bg-gold-500/10 border-l border-b border-gold-500/20 px-3 py-1">
-                  <span className="font-sans text-[9px] tracking-widest uppercase text-gold-400/80">Popular</span>
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  background: 'rgba(107,76,35,0.08)',
+                  borderLeft: '1px solid rgba(154,122,58,0.3)',
+                  borderBottom: '1px solid rgba(154,122,58,0.3)',
+                  padding: '0.2rem 0.75rem',
+                }}>
+                  <span style={{
+                    fontFamily: '"Libre Baskerville", Georgia, serif',
+                    fontSize: '0.55rem',
+                    letterSpacing: '0.2em',
+                    textTransform: 'uppercase',
+                    color: '#9a7a3a',
+                  }}>Popular</span>
                 </div>
               )}
 
               <div className="flex items-start justify-between mb-5">
-                <span className="text-3xl">{d.emoji}</span>
-                <span className="font-sans text-[9px] tracking-[0.2em] uppercase text-gold-400/60 border border-gold-500/15 px-2 py-1 rounded-sm">
+                <span style={{
+                  fontFamily: '"Cormorant Garamond", Georgia, serif',
+                  fontSize: '1.8rem',
+                  fontWeight: 300,
+                  color: 'rgba(154,122,58,0.35)',
+                  lineHeight: 1,
+                }}>
+                  {d.numeral}
+                </span>
+                <span style={{
+                  fontFamily: '"Libre Baskerville", Georgia, serif',
+                  fontSize: '0.55rem',
+                  letterSpacing: '0.18em',
+                  textTransform: 'uppercase',
+                  color: '#9a7a3a',
+                  border: '1px solid rgba(154,122,58,0.3)',
+                  padding: '0.2rem 0.6rem',
+                }}>
                   {d.tag}
                 </span>
               </div>
 
-              <h3 className="font-serif text-xl text-stone-100 mb-2 font-normal group-hover:text-gradient-gold transition-all duration-300">
+              <div style={{ width: '24px', height: '1px', background: 'rgba(154,122,58,0.35)', marginBottom: '0.75rem' }} />
+
+              <h3 style={{
+                fontFamily: '"Cormorant Garamond", Georgia, serif',
+                fontSize: '1.3rem',
+                fontWeight: 600,
+                color: '#2a1c0b',
+                marginBottom: '0.5rem',
+              }}>
                 {d.name}
               </h3>
-              <p className="font-sans font-light text-sm text-stone-500 leading-relaxed flex-1 mb-6">
+              <p style={{
+                fontFamily: '"Crimson Text", Georgia, serif',
+                fontSize: '1.05rem',
+                color: '#7d6640',
+                lineHeight: 1.6,
+                flex: 1,
+                marginBottom: '1.5rem',
+              }}>
                 {d.desc}
               </p>
 
-              <div className="flex items-center justify-between border-t border-gold-500/8 pt-4">
-                <span className="font-serif text-xl text-gradient-gold">{d.price}</span>
-                <span className="font-sans text-xs text-stone-600 italic">{d.note}</span>
+              <div
+                className="flex items-center justify-between"
+                style={{ borderTop: '1px solid rgba(139,115,85,0.15)', paddingTop: '1rem' }}
+              >
+                <span style={{
+                  fontFamily: '"Cormorant Garamond", Georgia, serif',
+                  fontSize: '1.4rem',
+                  fontWeight: 500,
+                  color: '#6b4c23',
+                }}>
+                  {d.price}
+                </span>
+                <span style={{
+                  fontFamily: '"Crimson Text", Georgia, serif',
+                  fontSize: '0.9rem',
+                  fontStyle: 'italic',
+                  color: '#a08c6b',
+                }}>
+                  {d.note}
+                </span>
               </div>
             </div>
           ))}
@@ -147,7 +243,13 @@ export default function Menu() {
 
         {/* CTA */}
         <div className="text-center mt-14">
-          <p className="font-sans text-sm text-stone-500 mb-5 font-light">
+          <p style={{
+            fontFamily: '"Crimson Text", Georgia, serif',
+            fontSize: '1rem',
+            fontStyle: 'italic',
+            color: '#a08c6b',
+            marginBottom: '1.25rem',
+          }}>
             Full menu available in-house · Cash &amp; mobile payments accepted
           </p>
           <button
@@ -155,7 +257,7 @@ export default function Menu() {
               const el = document.querySelector('#reserve')
               if (el) el.scrollIntoView({ behavior: 'smooth' })
             }}
-            className="inline-block px-8 py-3.5 border border-gold-500/40 text-gold-400 font-sans text-xs tracking-[0.2em] uppercase hover:bg-gold-500 hover:text-charcoal-900 hover:border-gold-500 rounded-sm transition-all duration-300"
+            className="btn-outline px-10 py-3.5"
           >
             Book Your Table
           </button>
