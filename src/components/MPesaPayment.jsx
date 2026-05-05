@@ -1,465 +1,421 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
-const DEPOSIT_AMOUNT = 5000
+const DEPOSIT = 5000
+const POLL_INTERVAL = 4000   // poll every 4 seconds
+const POLL_TIMEOUT  = 90000  // stop polling after 90 seconds
 
-function MPesaLogo({ size = 28 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="20" cy="20" r="20" fill="#E31837" />
-      <text x="50%" y="56%" dominantBaseline="middle" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold" fontFamily="Arial, sans-serif">
-        M-PESA
-      </text>
-    </svg>
-  )
+const STATUS = {
+  IDLE: 'idle',
+  SENDING: 'sending',       // calling STK API
+  WAITING: 'waiting',       // STK sent, waiting for user to pay
+  POLLING: 'polling',       // checking payment status
+  SUCCESS: 'success',
+  CANCELLED: 'cancelled',
+  FAILED: 'failed',
+  TIMEOUT: 'timeout',
 }
-
-function Spinner() {
-  return (
-    <div style={{
-      width: '48px', height: '48px', borderRadius: '50%',
-      border: '2px solid rgba(139,115,85,0.2)',
-      borderTopColor: '#5a8a3a',
-      animation: 'spin 0.9s linear infinite',
-      margin: '0 auto',
-    }} />
-  )
-}
-
-function Steps({ current }) {
-  const steps = ['Details', 'Payment', 'Confirmed']
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2.5rem', gap: 0 }}>
-      {steps.map((label, i) => {
-        const idx = i + 1
-        const done = current > idx
-        const active = current === idx
-        return (
-          <div key={label} style={{ display: 'flex', alignItems: 'center' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{
-                width: '32px', height: '32px', borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontFamily: '"Libre Baskerville", Georgia, serif',
-                fontSize: '0.7rem', fontWeight: 700,
-                border: done ? '1px solid #5a8a3a' : active ? '1px solid #6b4c23' : '1px solid rgba(139,115,85,0.3)',
-                background: done ? 'rgba(90,138,58,0.1)' : active ? 'rgba(107,76,35,0.08)' : 'transparent',
-                color: done ? '#5a8a3a' : active ? '#6b4c23' : '#a08c6b',
-                transition: 'all 0.4s',
-              }}>
-                {done ? '✓' : idx}
-              </div>
-              <span style={{
-                fontFamily: '"Libre Baskerville", Georgia, serif',
-                fontSize: '0.55rem', letterSpacing: '0.2em', textTransform: 'uppercase',
-                color: done ? '#5a8a3a' : active ? '#6b4c23' : '#a08c6b',
-                marginTop: '6px',
-              }}>
-                {label}
-              </span>
-            </div>
-            {i < steps.length - 1 && (
-              <div style={{
-                width: '64px', height: '1px', margin: '0 4px', marginBottom: '20px',
-                background: done ? 'rgba(90,138,58,0.4)' : 'rgba(139,115,85,0.2)',
-                transition: 'all 0.4s',
-              }} />
-            )}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-const fieldLabel = {
-  display: 'block',
-  fontFamily: '"Libre Baskerville", Georgia, serif',
-  fontSize: '0.6rem',
-  letterSpacing: '0.2em',
-  textTransform: 'uppercase',
-  color: '#8b7355',
-  marginBottom: '0.5rem',
-}
-
-const summaryKey = { fontFamily: '"Crimson Text", Georgia, serif', fontSize: '1rem', color: '#8b7355' }
-const summaryVal = { fontFamily: '"Crimson Text", Georgia, serif', fontSize: '1rem', color: '#3d2a12' }
 
 export default function MPesaPayment({ reservation, onBack, onComplete }) {
-  const [phase, setPhase] = useState('enter')
-  const [mpesaPhone, setMpesaPhone] = useState(reservation.phone || '')
-  const [phoneError, setPhoneError] = useState('')
-  const [countdown, setCountdown] = useState(60)
-  const [transactionId, setTransactionId] = useState('')
+  const [phone, setPhone] = useState(reservation.phone || '')
+  const [status, setStatus] = useState(STATUS.IDLE)
+  const [error, setError] = useState('')
+  const [checkoutId, setCheckoutId] = useState(null)
+  const [secondsLeft, setSecondsLeft] = useState(90)
 
+  const pollRef = useRef(null)
+  const timerRef = useRef(null)
+  const countdownRef = useRef(null)
+
+  // ── Cleanup on unmount ──
   useEffect(() => {
-    if (phase !== 'waiting') return
-    if (countdown <= 0) { setPhase('failed'); return }
-    const t = setTimeout(() => setCountdown((c) => c - 1), 1000)
-    return () => clearTimeout(t)
-  }, [phase, countdown])
-
-  const handleInitiate = () => {
-    const cleaned = mpesaPhone.replace(/\s+/g, '').replace(/^\+255/, '0').replace(/^255/, '0')
-    if (!/^07\d{8}$/.test(cleaned)) {
-      setPhoneError('Enter a valid Tanzanian M-Pesa number (07XXXXXXXX)')
-      return
+    return () => {
+      clearInterval(pollRef.current)
+      clearTimeout(timerRef.current)
+      clearInterval(countdownRef.current)
     }
-    setPhoneError('')
-    setPhase('pushing')
-    setTimeout(() => { setPhase('waiting'); setCountdown(60) }, 2000)
-    setTimeout(() => {
-      const txId = 'TZ' + Math.random().toString(36).substring(2, 10).toUpperCase()
-      setTransactionId(txId)
-      setPhase('success')
-    }, 6500)
+  }, [])
+
+  // ── Initiate STK Push ──
+  const initiatePush = async () => {
+    setError('')
+    setStatus(STATUS.SENDING)
+
+    try {
+      const res = await fetch('/api/mpesa-stk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone,
+          amount: DEPOSIT,
+          accountRef: `KAFFEEHAUS-${reservation.name?.replace(/\s+/g, '').toUpperCase().slice(0, 8)}`,
+          description: `Table reservation deposit – ${reservation.date} ${reservation.time}`,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok || !data.success) {
+        setError(data.details?.errorMessage || data.error || 'Failed to send payment request. Please try again.')
+        setStatus(STATUS.IDLE)
+        return
+      }
+
+      setCheckoutId(data.checkoutRequestId)
+      setStatus(STATUS.WAITING)
+      setSecondsLeft(90)
+      startPolling(data.checkoutRequestId)
+    } catch (err) {
+      setError('Network error. Check your connection and try again.')
+      setStatus(STATUS.IDLE)
+    }
   }
 
-  const formattedPhone = mpesaPhone.replace(/\s+/g, '') || reservation.phone
+  // ── Poll for payment status ──
+  const startPolling = (cid) => {
+    // Countdown timer
+    countdownRef.current = setInterval(() => {
+      setSecondsLeft((s) => Math.max(0, s - 1))
+    }, 1000)
 
-  const cardStyle = {
-    background: '#f2ebda',
-    border: '1px solid rgba(139,115,85,0.25)',
-    padding: '2rem 2.5rem',
-    position: 'relative',
+    // Poll every 4s
+    pollRef.current = setInterval(() => {
+      checkStatus(cid)
+    }, POLL_INTERVAL)
+
+    // Hard timeout after 90s
+    timerRef.current = setTimeout(() => {
+      stopPolling()
+      setStatus(STATUS.TIMEOUT)
+    }, POLL_TIMEOUT)
   }
+
+  const stopPolling = () => {
+    clearInterval(pollRef.current)
+    clearTimeout(timerRef.current)
+    clearInterval(countdownRef.current)
+  }
+
+  const checkStatus = async (cid) => {
+    setStatus(STATUS.POLLING)
+    try {
+      const res = await fetch('/api/mpesa-query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ checkoutRequestId: cid }),
+      })
+
+      const data = await res.json()
+      const code = String(data.resultCode)
+
+      if (code === '0') {
+        // Payment successful
+        stopPolling()
+        setStatus(STATUS.SUCCESS)
+        setTimeout(() => onComplete(), 1800)
+      } else if (code === '1032') {
+        // User cancelled
+        stopPolling()
+        setStatus(STATUS.CANCELLED)
+      } else if (code === '1037') {
+        // Timed out on user side
+        stopPolling()
+        setStatus(STATUS.TIMEOUT)
+      } else if (data.resultDesc?.toLowerCase().includes('pending') || code === '1') {
+        // Still pending — keep polling
+        setStatus(STATUS.WAITING)
+      } else {
+        // Other failure
+        stopPolling()
+        setError(data.resultDesc || 'Payment failed. Please try again.')
+        setStatus(STATUS.FAILED)
+      }
+    } catch {
+      // Network hiccup — keep polling, don't stop
+      setStatus(STATUS.WAITING)
+    }
+  }
+
+  // ── Retry ──
+  const reset = () => {
+    stopPolling()
+    setStatus(STATUS.IDLE)
+    setError('')
+    setCheckoutId(null)
+    setSecondsLeft(90)
+  }
+
+  // ── Normalize phone display ──
+  const normalizePhone = (raw) =>
+    raw.replace(/\s+/g, '').replace(/^\+/, '').replace(/^0/, '254')
+
+  const isProcessing = [STATUS.SENDING, STATUS.WAITING, STATUS.POLLING].includes(status)
 
   return (
-    <div style={{ ...cardStyle, padding: '2rem' }}>
-      {/* Inset border */}
-      <div style={{ position: 'absolute', inset: '4px', border: '1px solid rgba(139,115,85,0.1)', pointerEvents: 'none' }} />
+    <div className="glass-card p-8 md:p-12 rounded-sm">
 
-      <Steps current={2} />
-
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes ping { 0%,100%{opacity:0.3;transform:scale(1)} 50%{opacity:0;transform:scale(1.4)} }
-      `}</style>
-
-      {/* ── ENTER PHONE ── */}
-      {phase === 'enter' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-
-          {/* M-Pesa header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-            <MPesaLogo size={36} />
-            <div>
-              <div style={{ fontFamily: '"Libre Baskerville", Georgia, serif', fontWeight: 700, fontSize: '0.9rem', letterSpacing: '0.1em', color: '#2a1c0b' }}>M-PESA</div>
-              <div style={{ fontFamily: '"Libre Baskerville", Georgia, serif', fontSize: '0.55rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#8b7355' }}>Secure Mobile Payment</div>
+      {/* Step indicator */}
+      <div className="flex items-center justify-center gap-0 mb-10">
+        {['Details', 'Payment', 'Confirmed'].map((label, i) => {
+          const idx = i + 1
+          const done = idx < 2
+          const active = idx === 2
+          return (
+            <div key={label} className="flex items-center">
+              <div className="flex flex-col items-center">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-sans font-semibold transition-all duration-500 ${
+                  done ? 'bg-emerald-600 text-white' : active ? 'border-2 border-gold-500 text-gold-400' : 'border border-stone-700 text-stone-600'
+                }`}>
+                  {done ? '✓' : idx}
+                </div>
+                <span className={`mt-1.5 font-sans text-[10px] tracking-wider uppercase ${active ? 'text-gold-400' : done ? 'text-emerald-500' : 'text-stone-600'}`}>
+                  {label}
+                </span>
+              </div>
+              {i < 2 && (
+                <div className={`w-16 h-px mb-5 mx-1 transition-all duration-500 ${done ? 'bg-emerald-600/50' : 'bg-stone-800'}`} />
+              )}
             </div>
+          )
+        })}
+      </div>
+
+      {/* ── IDLE / ENTRY STATE ── */}
+      {status === STATUS.IDLE && (
+        <div className="space-y-7">
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-red-950/40 border border-red-900/30 mb-4">
+              <span className="text-2xl">📱</span>
+            </div>
+            <h3 className="font-serif text-2xl text-stone-100 mb-2 font-normal">M-Pesa Payment</h3>
+            <p className="font-sans text-sm text-stone-500 font-light leading-relaxed max-w-xs mx-auto">
+              We'll send an STK push to your phone. Enter your PIN to confirm the deposit.
+            </p>
           </div>
 
-          {/* Booking summary */}
-          <div style={{ background: 'rgba(90,138,58,0.04)', border: '1px solid rgba(90,138,58,0.2)', padding: '1.25rem' }}>
-            <p style={{ fontFamily: '"Libre Baskerville", Georgia, serif', fontSize: '0.55rem', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(90,138,58,0.7)', marginBottom: '0.75rem' }}>
-              Reservation Summary
-            </p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem 1rem' }}>
-              {[
-                ['Guest', reservation.name],
-                ['Date', reservation.date],
-                ['Time', reservation.time],
-                ['Guests', reservation.guests],
-              ].map(([k, v]) => (
-                <>
-                  <span key={`k-${k}`} style={summaryKey}>{k}</span>
-                  <span key={`v-${k}`} style={summaryVal}>{v}</span>
-                </>
-              ))}
+          {/* Reservation summary */}
+          <div className="bg-stone-900/50 border border-gold-500/10 p-5 space-y-2.5 rounded-sm">
+            <div className="flex justify-between font-sans text-sm">
+              <span className="text-stone-500">Reservation</span>
+              <span className="text-stone-300">{reservation.name}</span>
             </div>
-            <div style={{ borderTop: '1px solid rgba(90,138,58,0.15)', marginTop: '0.75rem', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={summaryKey}>Reservation Deposit</span>
-              <span style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: '1.4rem', color: '#5a8a3a' }}>
-                TZS {DEPOSIT_AMOUNT.toLocaleString()}
-              </span>
+            <div className="flex justify-between font-sans text-sm">
+              <span className="text-stone-500">Date & Time</span>
+              <span className="text-stone-300">{reservation.date} at {reservation.time}</span>
             </div>
-            <p style={{ fontFamily: '"Crimson Text", Georgia, serif', fontSize: '0.85rem', fontStyle: 'italic', color: '#a08c6b', marginTop: '0.25rem' }}>
-              Deductible from your final bill
-            </p>
+            <div className="flex justify-between font-sans text-sm">
+              <span className="text-stone-500">Guests</span>
+              <span className="text-stone-300">{reservation.guests}</span>
+            </div>
+            <div className="border-t border-gold-500/10 pt-2.5 flex justify-between font-sans text-sm">
+              <span className="text-stone-400 font-medium">Deposit Amount</span>
+              <span className="text-emerald-400 font-semibold">TZS {DEPOSIT.toLocaleString()}</span>
+            </div>
           </div>
 
           {/* Phone input */}
           <div>
-            <label style={fieldLabel}>M-Pesa Phone Number</label>
-            <div style={{ display: 'flex' }}>
-              <div style={{
-                display: 'flex', alignItems: 'center', padding: '0 1rem',
-                border: '1px solid rgba(139,115,85,0.3)', borderRight: 'none',
-                background: 'rgba(90,138,58,0.04)',
-                fontFamily: '"Crimson Text", Georgia, serif', fontSize: '1rem', color: '#8b7355',
-                whiteSpace: 'nowrap',
-              }}>
-                🇹🇿 +255
-              </div>
+            <label className="block font-sans text-[10px] tracking-[0.2em] uppercase text-stone-500 mb-2">
+              M-Pesa Phone Number
+            </label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-sans text-sm text-stone-500">+</span>
               <input
                 type="tel"
-                placeholder="07X XXX XXXX"
-                value={mpesaPhone}
-                onChange={(e) => { setMpesaPhone(e.target.value); setPhoneError('') }}
-                style={{
-                  flex: 1,
-                  background: 'rgba(250,246,237,0.9)',
-                  border: '1px solid rgba(139,115,85,0.3)',
-                  padding: '0.75rem 1rem',
-                  fontFamily: '"Crimson Text", Georgia, serif',
-                  fontSize: '1rem',
-                  color: '#2a1c0b',
-                  outline: 'none',
-                }}
-                onFocus={e => e.target.style.borderColor = '#9a7a3a'}
-                onBlur={e => e.target.style.borderColor = 'rgba(139,115,85,0.3)'}
+                placeholder="255 7XX XXX XXX"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full bg-transparent border border-gold-500/15 pl-8 pr-4 py-3 font-sans text-sm text-stone-200 placeholder-stone-700 focus:outline-none focus:border-gold-500/50 rounded-sm transition-colors"
               />
             </div>
-            {phoneError && (
-              <p style={{ fontFamily: '"Crimson Text", Georgia, serif', fontSize: '0.9rem', color: '#8b1a1a', marginTop: '0.35rem' }}>{phoneError}</p>
-            )}
-            <p style={{ fontFamily: '"Crimson Text", Georgia, serif', fontSize: '0.9rem', fontStyle: 'italic', color: '#a08c6b', marginTop: '0.35rem' }}>
-              You'll receive an M-Pesa prompt on this number to approve TZS {DEPOSIT_AMOUNT.toLocaleString()}
+            <p className="font-sans text-xs text-stone-600 mt-1.5">
+              Enter your Safaricom number e.g. 255712345678
             </p>
           </div>
 
-          {/* Security note */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', background: 'rgba(196,168,130,0.08)', border: '1px solid rgba(139,115,85,0.15)', padding: '0.75rem 1rem' }}>
-            <span style={{ color: '#9a7a3a', flexShrink: 0, marginTop: '2px' }}>✦</span>
-            <p style={{ fontFamily: '"Crimson Text", Georgia, serif', fontSize: '0.9rem', fontStyle: 'italic', color: '#8b7355', margin: 0, lineHeight: 1.5 }}>
-              Never share your M-Pesa PIN with anyone. We will never ask for it.
-            </p>
-          </div>
-
-          {/* CTA */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <button
-              onClick={handleInitiate}
-              style={{
-                width: '100%', padding: '1rem',
-                background: '#5a8a3a', color: '#faf6ed',
-                fontFamily: '"Libre Baskerville", Georgia, serif',
-                fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase',
-                border: '1px solid #5a8a3a', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
-                transition: 'all 0.25s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = '#4a7530'}
-              onMouseLeave={e => e.currentTarget.style.background = '#5a8a3a'}
-            >
-              <MPesaLogo size={18} />
-              Pay TZS {DEPOSIT_AMOUNT.toLocaleString()} via M-Pesa
-            </button>
-            <button
-              onClick={onBack}
-              style={{
-                width: '100%', padding: '0.75rem',
-                background: 'transparent', color: '#8b7355',
-                fontFamily: '"Libre Baskerville", Georgia, serif',
-                fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase',
-                border: '1px solid rgba(139,115,85,0.3)', cursor: 'pointer',
-                transition: 'all 0.25s',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,115,85,0.06)'; e.currentTarget.style.color = '#6b4c23' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8b7355' }}
-            >
-              Back to Details
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ── PUSHING ── */}
-      {phase === 'pushing' && (
-        <div style={{ textAlign: 'center', padding: '2rem 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
-          <Spinner />
-          <div>
-            <h3 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: '1.6rem', fontWeight: 300, color: '#2a1c0b', marginBottom: '0.5rem' }}>
-              Sending Payment Request…
-            </h3>
-            <p style={{ fontFamily: '"Crimson Text", Georgia, serif', fontSize: '1rem', fontStyle: 'italic', color: '#8b7355' }}>
-              Initiating M-Pesa STK push to <strong style={{ fontStyle: 'normal', color: '#3d2a12' }}>{formattedPhone}</strong>
-            </p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <MPesaLogo size={16} />
-            <span style={{ fontFamily: '"Libre Baskerville", Georgia, serif', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#a08c6b' }}>
-              Vodacom M-Pesa · Secure
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* ── WAITING ── */}
-      {phase === 'waiting' && (
-        <div style={{ textAlign: 'center', padding: '1rem 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
-          {/* Phone graphic */}
-          <div style={{
-            width: '80px', height: '130px',
-            border: '2px solid rgba(90,138,58,0.4)',
-            borderRadius: '12px',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            background: '#f2ebda',
-            position: 'relative',
-            boxShadow: '0 0 24px rgba(90,138,58,0.08)',
-          }}>
-            <div style={{ position: 'absolute', top: '6px', width: '24px', height: '3px', background: 'rgba(139,115,85,0.3)', borderRadius: '2px' }} />
-            <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>📲</div>
-            <div style={{ fontFamily: '"Libre Baskerville", Georgia, serif', fontSize: '0.5rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#5a8a3a', textAlign: 'center', lineHeight: 1.4 }}>
-              M-Pesa<br />Prompt Sent
+          {error && (
+            <div className="flex items-start gap-2.5 bg-red-950/20 border border-red-900/30 p-4 rounded-sm">
+              <span className="text-red-400 flex-shrink-0 mt-px">⚠</span>
+              <p className="font-sans text-xs text-red-300 leading-relaxed">{error}</p>
             </div>
-            <div style={{ position: 'absolute', inset: 0, borderRadius: '12px', border: '2px solid rgba(90,138,58,0.25)', animation: 'ping 1.5s ease infinite' }} />
-          </div>
-
-          <div>
-            <h3 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: '1.6rem', fontWeight: 300, color: '#2a1c0b', marginBottom: '0.5rem' }}>
-              Check Your Phone
-            </h3>
-            <p style={{ fontFamily: '"Crimson Text", Georgia, serif', fontSize: '1rem', fontStyle: 'italic', color: '#8b7355', maxWidth: '300px', lineHeight: 1.6 }}>
-              An M-Pesa prompt has been sent to <strong style={{ fontStyle: 'normal', color: '#3d2a12' }}>{formattedPhone}</strong>.{' '}
-              Enter your <strong style={{ fontStyle: 'normal', color: '#5a8a3a' }}>M-Pesa PIN</strong> to confirm TZS {DEPOSIT_AMOUNT.toLocaleString()}.
-            </p>
-          </div>
-
-          {/* Countdown ring */}
-          <div style={{ width: '80px', height: '80px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', transform: 'rotate(-90deg)' }} viewBox="0 0 80 80">
-              <circle cx="40" cy="40" r="36" fill="none" stroke="rgba(139,115,85,0.15)" strokeWidth="2" />
-              <circle cx="40" cy="40" r="36" fill="none" stroke="#5a8a3a" strokeWidth="2"
-                strokeDasharray={`${2 * Math.PI * 36}`}
-                strokeDashoffset={`${2 * Math.PI * 36 * (1 - countdown / 60)}`}
-                strokeLinecap="round"
-                style={{ transition: 'stroke-dashoffset 1s linear' }}
-              />
-            </svg>
-            <div style={{ textAlign: 'center', zIndex: 1 }}>
-              <div style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: '1.5rem', color: '#5a8a3a', lineHeight: 1 }}>{countdown}</div>
-              <div style={{ fontFamily: '"Libre Baskerville", Georgia, serif', fontSize: '0.5rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#a08c6b' }}>secs</div>
-            </div>
-          </div>
-
-          <div style={{ background: 'rgba(196,168,130,0.08)', border: '1px solid rgba(139,115,85,0.15)', padding: '0.75rem 1rem', maxWidth: '320px' }}>
-            <p style={{ fontFamily: '"Crimson Text", Georgia, serif', fontSize: '0.9rem', fontStyle: 'italic', color: '#8b7355', margin: 0 }}>
-              ⚠ Do not close this page. Your reservation will be held for <strong style={{ fontStyle: 'normal', color: '#6b4c23' }}>{countdown} seconds</strong>.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* ── SUCCESS ── */}
-      {phase === 'success' && (
-        <div style={{ textAlign: 'center', padding: '1rem 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
-          {/* Success ring */}
-          <div style={{
-            width: '72px', height: '72px', borderRadius: '50%',
-            border: '1px solid rgba(90,138,58,0.5)',
-            background: 'rgba(90,138,58,0.05)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            position: 'relative',
-          }}>
-            <svg width="28" height="28" fill="none" stroke="#5a8a3a" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-
-          <div>
-            <p style={{ fontFamily: '"Libre Baskerville", Georgia, serif', fontSize: '0.6rem', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(90,138,58,0.7)', marginBottom: '0.5rem' }}>
-              Payment Confirmed
-            </p>
-            <h3 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: '2rem', fontWeight: 300, color: '#2a1c0b', marginBottom: '0.5rem' }}>
-              You're All Set!
-            </h3>
-            <p style={{ fontFamily: '"Crimson Text", Georgia, serif', fontSize: '1rem', fontStyle: 'italic', color: '#8b7355', maxWidth: '300px' }}>
-              TZS {DEPOSIT_AMOUNT.toLocaleString()} received via M-Pesa. Your table at <strong style={{ fontStyle: 'normal', color: '#6b4c23' }}>The Kaffeehaus</strong> is confirmed.
-            </p>
-          </div>
-
-          {/* Receipt */}
-          <div style={{ background: 'rgba(90,138,58,0.04)', border: '1px solid rgba(90,138,58,0.2)', padding: '1.25rem', textAlign: 'left', width: '100%', maxWidth: '340px' }}>
-            <p style={{ fontFamily: '"Libre Baskerville", Georgia, serif', fontSize: '0.55rem', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(90,138,58,0.7)', marginBottom: '0.75rem' }}>
-              Transaction Receipt
-            </p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem 1rem' }}>
-              {[
-                ['Transaction ID', transactionId],
-                ['Amount Paid', `TZS ${DEPOSIT_AMOUNT.toLocaleString()}`],
-                ['Method', 'M-Pesa'],
-                ['Phone', formattedPhone],
-                ['Date / Time', `${reservation.date} · ${reservation.time}`],
-                ['Guest', reservation.name],
-              ].map(([k, v]) => (
-                <>
-                  <span key={`k-${k}`} style={summaryKey}>{k}</span>
-                  <span key={`v-${k}`} style={{ ...summaryVal, color: k === 'Amount Paid' ? '#5a8a3a' : '#3d2a12', fontFamily: k === 'Transaction ID' ? 'monospace' : '"Crimson Text", Georgia, serif' }}>{v}</span>
-                </>
-              ))}
-            </div>
-          </div>
-
-          <p style={{ fontFamily: '"Crimson Text", Georgia, serif', fontSize: '0.9rem', fontStyle: 'italic', color: '#a08c6b' }}>
-            An SMS confirmation will be sent to {formattedPhone}. Your deposit is deductible from the final bill.
-          </p>
+          )}
 
           <button
-            onClick={onComplete}
-            className="btn-primary w-full py-4"
+            onClick={initiatePush}
+            disabled={!phone || phone.length < 9}
+            className="w-full py-4 bg-red-700 text-white font-sans font-semibold text-xs tracking-[0.2em] uppercase hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.99] transition-all duration-300 shadow-lg shadow-red-900/30 rounded-sm flex items-center justify-center gap-2"
           >
-            View Reservation Details
+            <span>Send M-Pesa Request</span>
+            <span>→</span>
+          </button>
+
+          <button
+            onClick={onBack}
+            className="w-full font-sans text-xs text-stone-600 hover:text-stone-400 tracking-[0.15em] uppercase transition-colors duration-200"
+          >
+            ← Back to Details
           </button>
         </div>
       )}
 
-      {/* ── FAILED ── */}
-      {phase === 'failed' && (
-        <div style={{ textAlign: 'center', padding: '1rem 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
-          <div style={{
-            width: '72px', height: '72px', borderRadius: '50%',
-            border: '1px solid rgba(139,26,26,0.4)',
-            background: 'rgba(139,26,26,0.05)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <svg width="28" height="28" fill="none" stroke="#8b1a1a" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+      {/* ── SENDING STATE ── */}
+      {status === STATUS.SENDING && (
+        <div className="text-center space-y-6 py-8">
+          <div className="flex justify-center">
+            <div className="w-14 h-14 border-2 border-gold-500/30 border-t-gold-500 rounded-full animate-spin" />
           </div>
           <div>
-            <h3 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: '1.8rem', fontWeight: 300, color: '#2a1c0b', marginBottom: '0.5rem' }}>
-              Payment Timed Out
-            </h3>
-            <p style={{ fontFamily: '"Crimson Text", Georgia, serif', fontSize: '1rem', fontStyle: 'italic', color: '#8b7355', maxWidth: '300px' }}>
-              The M-Pesa prompt expired without a response. Please try again or call us to reserve by phone.
+            <p className="font-sans text-xs tracking-[0.2em] uppercase text-stone-500 mb-2">Connecting</p>
+            <p className="font-serif text-xl text-stone-100 font-normal">Sending request to M-Pesa...</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── WAITING / POLLING STATE ── */}
+      {(status === STATUS.WAITING || status === STATUS.POLLING) && (
+        <div className="text-center space-y-7 py-4">
+          {/* Animated phone icon */}
+          <div className="relative inline-flex items-center justify-center">
+            <div className="w-20 h-20 rounded-full bg-red-950/30 border border-red-900/30 flex items-center justify-center">
+              <span className="text-4xl animate-bounce">📱</span>
+            </div>
+            <div className="absolute inset-0 rounded-full border border-red-500/20 animate-ping" />
+          </div>
+
+          <div>
+            <p className="font-sans text-[10px] tracking-[0.3em] uppercase text-emerald-500/70 mb-2">Request Sent</p>
+            <h3 className="font-serif text-2xl text-stone-100 mb-3 font-normal">Check Your Phone</h3>
+            <p className="font-sans text-sm text-stone-500 font-light leading-relaxed max-w-xs mx-auto">
+              An M-Pesa prompt has been sent to{' '}
+              <strong className="text-stone-300">{normalizePhone(phone)}</strong>.
+              Enter your PIN to confirm the deposit.
             </p>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
+
+          {/* Deposit pill */}
+          <div className="inline-flex items-center gap-3 px-5 py-3 bg-emerald-950/20 border border-emerald-900/25 rounded-sm">
+            <span className="font-sans text-xs text-stone-500">Deposit</span>
+            <span className="font-serif text-lg text-emerald-400">TZS {DEPOSIT.toLocaleString()}</span>
+          </div>
+
+          {/* Countdown */}
+          <div className="space-y-2">
+            <div className="w-full bg-stone-800/60 rounded-full h-1 overflow-hidden max-w-xs mx-auto">
+              <div
+                className="h-full bg-gradient-to-r from-gold-600 to-gold-400 transition-all duration-1000 ease-linear"
+                style={{ width: `${(secondsLeft / 90) * 100}%` }}
+              />
+            </div>
+            <p className="font-sans text-xs text-stone-600">
+              Expires in <span className="text-stone-400 tabular-nums">{secondsLeft}s</span>
+            </p>
+          </div>
+
+          {/* Polling spinner */}
+          <div className="flex items-center justify-center gap-2 text-stone-600">
+            <div className="w-3 h-3 border border-stone-700 border-t-stone-400 rounded-full animate-spin" />
+            <span className="font-sans text-xs tracking-wider">Waiting for confirmation...</span>
+          </div>
+
+          <button
+            onClick={reset}
+            className="font-sans text-xs text-stone-700 hover:text-stone-500 tracking-[0.15em] uppercase transition-colors"
+          >
+            Cancel &amp; retry with different number
+          </button>
+        </div>
+      )}
+
+      {/* ── SUCCESS STATE ── */}
+      {status === STATUS.SUCCESS && (
+        <div className="text-center space-y-5 py-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-950/40 border border-emerald-700/40">
+            <span className="text-3xl">✓</span>
+          </div>
+          <div>
+            <p className="font-sans text-[10px] tracking-[0.3em] uppercase text-emerald-500/80 mb-2">Payment Confirmed</p>
+            <h3 className="font-serif text-2xl text-stone-100 font-normal">
+              TZS {DEPOSIT.toLocaleString()} received
+            </h3>
+            <p className="font-sans text-sm text-stone-500 mt-2">Redirecting to confirmation...</p>
+          </div>
+          <div className="flex justify-center">
+            <div className="w-8 h-8 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+          </div>
+        </div>
+      )}
+
+      {/* ── CANCELLED STATE ── */}
+      {status === STATUS.CANCELLED && (
+        <div className="text-center space-y-6 py-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-stone-900 border border-stone-700">
+            <span className="text-3xl">✕</span>
+          </div>
+          <div>
+            <p className="font-sans text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Cancelled</p>
+            <h3 className="font-serif text-2xl text-stone-200 font-normal mb-2">Payment Cancelled</h3>
+            <p className="font-sans text-sm text-stone-500 font-light">You cancelled the M-Pesa request on your phone.</p>
+          </div>
+          <button
+            onClick={reset}
+            className="px-8 py-3 border border-gold-500/40 text-gold-400 font-sans text-xs tracking-[0.2em] uppercase hover:bg-gold-500 hover:text-charcoal-900 rounded-sm transition-all duration-300"
+          >
+            Try Again
+          </button>
+        </div>
+      )}
+
+      {/* ── TIMEOUT STATE ── */}
+      {status === STATUS.TIMEOUT && (
+        <div className="text-center space-y-6 py-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-950/30 border border-amber-900/30">
+            <span className="text-3xl">⏱</span>
+          </div>
+          <div>
+            <p className="font-sans text-[10px] tracking-[0.3em] uppercase text-amber-500/70 mb-2">Timed Out</p>
+            <h3 className="font-serif text-2xl text-stone-200 font-normal mb-2">Request Expired</h3>
+            <p className="font-sans text-sm text-stone-500 font-light max-w-xs mx-auto leading-relaxed">
+              The M-Pesa request expired before payment was made. Please try again.
+            </p>
+          </div>
+          <button
+            onClick={reset}
+            className="px-8 py-3 border border-gold-500/40 text-gold-400 font-sans text-xs tracking-[0.2em] uppercase hover:bg-gold-500 hover:text-charcoal-900 rounded-sm transition-all duration-300"
+          >
+            Try Again
+          </button>
+        </div>
+      )}
+
+      {/* ── FAILED STATE ── */}
+      {status === STATUS.FAILED && (
+        <div className="text-center space-y-6 py-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-950/30 border border-red-900/30">
+            <span className="text-3xl">⚠</span>
+          </div>
+          <div>
+            <p className="font-sans text-[10px] tracking-[0.3em] uppercase text-red-500/70 mb-2">Failed</p>
+            <h3 className="font-serif text-2xl text-stone-200 font-normal mb-2">Payment Failed</h3>
+            <p className="font-sans text-sm text-stone-500 font-light max-w-xs mx-auto leading-relaxed">
+              {error || 'Something went wrong. Please try again or use a different number.'}
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
-              onClick={() => { setPhase('enter'); setCountdown(60) }}
-              style={{
-                width: '100%', padding: '1rem',
-                background: '#5a8a3a', color: '#faf6ed',
-                fontFamily: '"Libre Baskerville", Georgia, serif',
-                fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase',
-                border: '1px solid #5a8a3a', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
-                transition: 'all 0.25s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = '#4a7530'}
-              onMouseLeave={e => e.currentTarget.style.background = '#5a8a3a'}
+              onClick={reset}
+              className="px-8 py-3 border border-gold-500/40 text-gold-400 font-sans text-xs tracking-[0.2em] uppercase hover:bg-gold-500 hover:text-charcoal-900 rounded-sm transition-all duration-300"
             >
-              <MPesaLogo size={16} />
               Try Again
             </button>
             <button
               onClick={onBack}
-              style={{
-                width: '100%', padding: '0.75rem',
-                background: 'transparent', color: '#8b7355',
-                fontFamily: '"Libre Baskerville", Georgia, serif',
-                fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase',
-                border: '1px solid rgba(139,115,85,0.3)', cursor: 'pointer',
-                transition: 'all 0.25s',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,115,85,0.06)'; e.currentTarget.style.color = '#6b4c23' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8b7355' }}
+              className="px-8 py-3 border border-stone-700 text-stone-500 font-sans text-xs tracking-[0.2em] uppercase hover:border-stone-500 hover:text-stone-300 rounded-sm transition-all duration-300"
             >
               Back to Details
             </button>
           </div>
         </div>
       )}
+
     </div>
   )
 }
