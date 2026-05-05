@@ -1,14 +1,18 @@
 import { useState, useEffect, useRef } from 'react'
 
 const DEPOSIT = 5000
-const POLL_INTERVAL = 4000   // poll every 4 seconds
-const POLL_TIMEOUT  = 90000  // stop polling after 90 seconds
+const POLL_INTERVAL = 4000
+const POLL_TIMEOUT  = 90000
+
+// Safaricom sandbox test number — used automatically in non-production mode
+const SANDBOX_TEST_PHONE = '254708374149'
+const IS_SANDBOX = import.meta.env.VITE_MPESA_ENV !== 'production'
 
 const STATUS = {
   IDLE: 'idle',
-  SENDING: 'sending',       // calling STK API
-  WAITING: 'waiting',       // STK sent, waiting for user to pay
-  POLLING: 'polling',       // checking payment status
+  SENDING: 'sending',
+  WAITING: 'waiting',
+  POLLING: 'polling',
   SUCCESS: 'success',
   CANCELLED: 'cancelled',
   FAILED: 'failed',
@@ -26,7 +30,6 @@ export default function MPesaPayment({ reservation, onBack, onComplete }) {
   const timerRef = useRef(null)
   const countdownRef = useRef(null)
 
-  // ── Cleanup on unmount ──
   useEffect(() => {
     return () => {
       clearInterval(pollRef.current)
@@ -35,17 +38,19 @@ export default function MPesaPayment({ reservation, onBack, onComplete }) {
     }
   }, [])
 
-  // ── Initiate STK Push ──
   const initiatePush = async () => {
     setError('')
     setStatus(STATUS.SENDING)
+
+    // In sandbox mode, always use Safaricom's test number
+    const phoneToSend = IS_SANDBOX ? SANDBOX_TEST_PHONE : phone
 
     try {
       const res = await fetch('/api/mpesa-stk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          phone,
+          phone: phoneToSend,
           amount: DEPOSIT,
           accountRef: `KAFFEEHAUS-${reservation.name?.replace(/\s+/g, '').toUpperCase().slice(0, 8)}`,
           description: `Table reservation deposit – ${reservation.date} ${reservation.time}`,
@@ -70,19 +75,15 @@ export default function MPesaPayment({ reservation, onBack, onComplete }) {
     }
   }
 
-  // ── Poll for payment status ──
   const startPolling = (cid) => {
-    // Countdown timer
     countdownRef.current = setInterval(() => {
       setSecondsLeft((s) => Math.max(0, s - 1))
     }, 1000)
 
-    // Poll every 4s
     pollRef.current = setInterval(() => {
       checkStatus(cid)
     }, POLL_INTERVAL)
 
-    // Hard timeout after 90s
     timerRef.current = setTimeout(() => {
       stopPolling()
       setStatus(STATUS.TIMEOUT)
@@ -108,34 +109,27 @@ export default function MPesaPayment({ reservation, onBack, onComplete }) {
       const code = String(data.resultCode)
 
       if (code === '0') {
-        // Payment successful
         stopPolling()
         setStatus(STATUS.SUCCESS)
         setTimeout(() => onComplete(), 1800)
       } else if (code === '1032') {
-        // User cancelled
         stopPolling()
         setStatus(STATUS.CANCELLED)
       } else if (code === '1037') {
-        // Timed out on user side
         stopPolling()
         setStatus(STATUS.TIMEOUT)
       } else if (data.resultDesc?.toLowerCase().includes('pending') || code === '1') {
-        // Still pending — keep polling
         setStatus(STATUS.WAITING)
       } else {
-        // Other failure
         stopPolling()
         setError(data.resultDesc || 'Payment failed. Please try again.')
         setStatus(STATUS.FAILED)
       }
     } catch {
-      // Network hiccup — keep polling, don't stop
       setStatus(STATUS.WAITING)
     }
   }
 
-  // ── Retry ──
   const reset = () => {
     stopPolling()
     setStatus(STATUS.IDLE)
@@ -143,12 +137,6 @@ export default function MPesaPayment({ reservation, onBack, onComplete }) {
     setCheckoutId(null)
     setSecondsLeft(90)
   }
-
-  // ── Normalize phone display ──
-  const normalizePhone = (raw) =>
-    raw.replace(/\s+/g, '').replace(/^\+/, '').replace(/^0/, '254')
-
-  const isProcessing = [STATUS.SENDING, STATUS.WAITING, STATUS.POLLING].includes(status)
 
   return (
     <div className="glass-card p-8 md:p-12 rounded-sm">
@@ -179,7 +167,7 @@ export default function MPesaPayment({ reservation, onBack, onComplete }) {
         })}
       </div>
 
-      {/* ── IDLE / ENTRY STATE ── */}
+      {/* ── IDLE STATE ── */}
       {status === STATUS.IDLE && (
         <div className="space-y-7">
           <div className="text-center">
@@ -188,9 +176,26 @@ export default function MPesaPayment({ reservation, onBack, onComplete }) {
             </div>
             <h3 className="font-serif text-2xl text-stone-100 mb-2 font-normal">M-Pesa Payment</h3>
             <p className="font-sans text-sm text-stone-500 font-light leading-relaxed max-w-xs mx-auto">
-              We'll send an STK push to your phone. Enter your PIN to confirm the deposit.
+              {IS_SANDBOX
+                ? 'Sandbox mode — payment will be simulated using Safaricom\'s test number.'
+                : 'We\'ll send an STK push to your phone. Enter your PIN to confirm the deposit.'}
             </p>
           </div>
+
+          {/* Sandbox notice banner */}
+          {IS_SANDBOX && (
+            <div className="flex items-start gap-3 bg-amber-950/20 border border-amber-800/30 p-4 rounded-sm">
+              <span className="text-amber-400 flex-shrink-0 text-base mt-px">🧪</span>
+              <div>
+                <p className="font-sans text-xs text-amber-300 font-medium mb-0.5">Sandbox / Test Mode</p>
+                <p className="font-sans text-xs text-stone-500 leading-relaxed">
+                  Your phone number is ignored in sandbox. Safaricom test number{' '}
+                  <span className="text-stone-300 font-mono">{SANDBOX_TEST_PHONE}</span> will be used automatically.
+                  No real money is charged.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Reservation summary */}
           <div className="bg-stone-900/50 border border-gold-500/10 p-5 space-y-2.5 rounded-sm">
@@ -212,25 +217,39 @@ export default function MPesaPayment({ reservation, onBack, onComplete }) {
             </div>
           </div>
 
-          {/* Phone input */}
-          <div>
-            <label className="block font-sans text-[10px] tracking-[0.2em] uppercase text-stone-500 mb-2">
-              M-Pesa Phone Number
-            </label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-sans text-sm text-stone-500">+</span>
-              <input
-                type="tel"
-                placeholder="255 7XX XXX XXX"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full bg-transparent border border-gold-500/15 pl-8 pr-4 py-3 font-sans text-sm text-stone-200 placeholder-stone-700 focus:outline-none focus:border-gold-500/50 rounded-sm transition-colors"
-              />
+          {/* Phone input — shown in production only */}
+          {!IS_SANDBOX && (
+            <div>
+              <label className="block font-sans text-[10px] tracking-[0.2em] uppercase text-stone-500 mb-2">
+                M-Pesa Phone Number
+              </label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-sans text-sm text-stone-500">+</span>
+                <input
+                  type="tel"
+                  placeholder="2557XXXXXXXX"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full bg-transparent border border-gold-500/15 pl-8 pr-4 py-3 font-sans text-sm text-stone-200 placeholder-stone-700 focus:outline-none focus:border-gold-500/50 rounded-sm transition-colors"
+                />
+              </div>
+              <p className="font-sans text-xs text-stone-600 mt-1.5">
+                Enter your Vodacom/Tigo number e.g. 255712345678
+              </p>
             </div>
-            <p className="font-sans text-xs text-stone-600 mt-1.5">
-              Enter your Safaricom number e.g. 255712345678
-            </p>
-          </div>
+          )}
+
+          {/* In sandbox, show the phone being used (read-only) */}
+          {IS_SANDBOX && (
+            <div>
+              <label className="block font-sans text-[10px] tracking-[0.2em] uppercase text-stone-500 mb-2">
+                Test Phone Number (auto)
+              </label>
+              <div className="w-full bg-stone-900/50 border border-stone-800 px-4 py-3 font-mono text-sm text-stone-500 rounded-sm">
+                {SANDBOX_TEST_PHONE}
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="flex items-start gap-2.5 bg-red-950/20 border border-red-900/30 p-4 rounded-sm">
@@ -241,10 +260,10 @@ export default function MPesaPayment({ reservation, onBack, onComplete }) {
 
           <button
             onClick={initiatePush}
-            disabled={!phone || phone.length < 9}
+            disabled={!IS_SANDBOX && (!phone || phone.length < 9)}
             className="w-full py-4 bg-red-700 text-white font-sans font-semibold text-xs tracking-[0.2em] uppercase hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.99] transition-all duration-300 shadow-lg shadow-red-900/30 rounded-sm flex items-center justify-center gap-2"
           >
-            <span>Send M-Pesa Request</span>
+            <span>{IS_SANDBOX ? 'Simulate M-Pesa Payment' : 'Send M-Pesa Request'}</span>
             <span>→</span>
           </button>
 
@@ -273,7 +292,6 @@ export default function MPesaPayment({ reservation, onBack, onComplete }) {
       {/* ── WAITING / POLLING STATE ── */}
       {(status === STATUS.WAITING || status === STATUS.POLLING) && (
         <div className="text-center space-y-7 py-4">
-          {/* Animated phone icon */}
           <div className="relative inline-flex items-center justify-center">
             <div className="w-20 h-20 rounded-full bg-red-950/30 border border-red-900/30 flex items-center justify-center">
               <span className="text-4xl animate-bounce">📱</span>
@@ -283,21 +301,21 @@ export default function MPesaPayment({ reservation, onBack, onComplete }) {
 
           <div>
             <p className="font-sans text-[10px] tracking-[0.3em] uppercase text-emerald-500/70 mb-2">Request Sent</p>
-            <h3 className="font-serif text-2xl text-stone-100 mb-3 font-normal">Check Your Phone</h3>
+            <h3 className="font-serif text-2xl text-stone-100 mb-3 font-normal">
+              {IS_SANDBOX ? 'Simulating Payment...' : 'Check Your Phone'}
+            </h3>
             <p className="font-sans text-sm text-stone-500 font-light leading-relaxed max-w-xs mx-auto">
-              An M-Pesa prompt has been sent to{' '}
-              <strong className="text-stone-300">{normalizePhone(phone)}</strong>.
-              Enter your PIN to confirm the deposit.
+              {IS_SANDBOX
+                ? 'Sandbox mode — polling for auto-confirmation from Safaricom test environment.'
+                : `An M-Pesa prompt has been sent to ${phone}. Enter your PIN to confirm.`}
             </p>
           </div>
 
-          {/* Deposit pill */}
           <div className="inline-flex items-center gap-3 px-5 py-3 bg-emerald-950/20 border border-emerald-900/25 rounded-sm">
             <span className="font-sans text-xs text-stone-500">Deposit</span>
             <span className="font-serif text-lg text-emerald-400">TZS {DEPOSIT.toLocaleString()}</span>
           </div>
 
-          {/* Countdown */}
           <div className="space-y-2">
             <div className="w-full bg-stone-800/60 rounded-full h-1 overflow-hidden max-w-xs mx-auto">
               <div
@@ -310,7 +328,6 @@ export default function MPesaPayment({ reservation, onBack, onComplete }) {
             </p>
           </div>
 
-          {/* Polling spinner */}
           <div className="flex items-center justify-center gap-2 text-stone-600">
             <div className="w-3 h-3 border border-stone-700 border-t-stone-400 rounded-full animate-spin" />
             <span className="font-sans text-xs tracking-wider">Waiting for confirmation...</span>
@@ -320,7 +337,7 @@ export default function MPesaPayment({ reservation, onBack, onComplete }) {
             onClick={reset}
             className="font-sans text-xs text-stone-700 hover:text-stone-500 tracking-[0.15em] uppercase transition-colors"
           >
-            Cancel &amp; retry with different number
+            Cancel &amp; try again
           </button>
         </div>
       )}
@@ -353,12 +370,9 @@ export default function MPesaPayment({ reservation, onBack, onComplete }) {
           <div>
             <p className="font-sans text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Cancelled</p>
             <h3 className="font-serif text-2xl text-stone-200 font-normal mb-2">Payment Cancelled</h3>
-            <p className="font-sans text-sm text-stone-500 font-light">You cancelled the M-Pesa request on your phone.</p>
+            <p className="font-sans text-sm text-stone-500 font-light">The M-Pesa request was cancelled.</p>
           </div>
-          <button
-            onClick={reset}
-            className="px-8 py-3 border border-gold-500/40 text-gold-400 font-sans text-xs tracking-[0.2em] uppercase hover:bg-gold-500 hover:text-charcoal-900 rounded-sm transition-all duration-300"
-          >
+          <button onClick={reset} className="px-8 py-3 border border-gold-500/40 text-gold-400 font-sans text-xs tracking-[0.2em] uppercase hover:bg-gold-500 hover:text-charcoal-900 rounded-sm transition-all duration-300">
             Try Again
           </button>
         </div>
@@ -374,13 +388,10 @@ export default function MPesaPayment({ reservation, onBack, onComplete }) {
             <p className="font-sans text-[10px] tracking-[0.3em] uppercase text-amber-500/70 mb-2">Timed Out</p>
             <h3 className="font-serif text-2xl text-stone-200 font-normal mb-2">Request Expired</h3>
             <p className="font-sans text-sm text-stone-500 font-light max-w-xs mx-auto leading-relaxed">
-              The M-Pesa request expired before payment was made. Please try again.
+              The M-Pesa request expired. Please try again.
             </p>
           </div>
-          <button
-            onClick={reset}
-            className="px-8 py-3 border border-gold-500/40 text-gold-400 font-sans text-xs tracking-[0.2em] uppercase hover:bg-gold-500 hover:text-charcoal-900 rounded-sm transition-all duration-300"
-          >
+          <button onClick={reset} className="px-8 py-3 border border-gold-500/40 text-gold-400 font-sans text-xs tracking-[0.2em] uppercase hover:bg-gold-500 hover:text-charcoal-900 rounded-sm transition-all duration-300">
             Try Again
           </button>
         </div>
@@ -396,20 +407,14 @@ export default function MPesaPayment({ reservation, onBack, onComplete }) {
             <p className="font-sans text-[10px] tracking-[0.3em] uppercase text-red-500/70 mb-2">Failed</p>
             <h3 className="font-serif text-2xl text-stone-200 font-normal mb-2">Payment Failed</h3>
             <p className="font-sans text-sm text-stone-500 font-light max-w-xs mx-auto leading-relaxed">
-              {error || 'Something went wrong. Please try again or use a different number.'}
+              {error || 'Something went wrong. Please try again.'}
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <button
-              onClick={reset}
-              className="px-8 py-3 border border-gold-500/40 text-gold-400 font-sans text-xs tracking-[0.2em] uppercase hover:bg-gold-500 hover:text-charcoal-900 rounded-sm transition-all duration-300"
-            >
+            <button onClick={reset} className="px-8 py-3 border border-gold-500/40 text-gold-400 font-sans text-xs tracking-[0.2em] uppercase hover:bg-gold-500 hover:text-charcoal-900 rounded-sm transition-all duration-300">
               Try Again
             </button>
-            <button
-              onClick={onBack}
-              className="px-8 py-3 border border-stone-700 text-stone-500 font-sans text-xs tracking-[0.2em] uppercase hover:border-stone-500 hover:text-stone-300 rounded-sm transition-all duration-300"
-            >
+            <button onClick={onBack} className="px-8 py-3 border border-stone-700 text-stone-500 font-sans text-xs tracking-[0.2em] uppercase hover:border-stone-500 hover:text-stone-300 rounded-sm transition-all duration-300">
               Back to Details
             </button>
           </div>
