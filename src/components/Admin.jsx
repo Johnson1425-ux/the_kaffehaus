@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'marist22'
 
@@ -9,102 +10,6 @@ const STATUS_CONFIG = {
   cancelled: { label: 'Cancelled', color: '#a08c6b', bg: 'rgba(160,140,107,0.06)', border: 'rgba(160,140,107,0.25)' },
 }
 
-// ── Login ──
-function LoginScreen({ onLogin }) {
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-
-  const handleLogin = (e) => {
-    e.preventDefault()
-    if (password === ADMIN_PASSWORD) {
-      onLogin()
-    } else {
-      setError('Incorrect password. Please try again.')
-      setPassword('')
-    }
-  }
-
-  return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#faf6ed',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '1.5rem',
-    }}>
-      <div style={{ width: '100%', maxWidth: '380px' }}>
-
-        {/* Brand */}
-        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <div style={{
-            fontFamily: '"Cormorant Garamond", Georgia, serif',
-            fontSize: '2rem',
-            fontWeight: 300,
-            color: '#2a1c0b',
-            marginBottom: '0.25rem',
-          }}>
-            The Kaffeehaus
-          </div>
-          <div style={{
-            fontFamily: '"Libre Baskerville", Georgia, serif',
-            fontSize: '0.55rem',
-            letterSpacing: '0.3em',
-            textTransform: 'uppercase',
-            color: '#9a7a3a',
-          }}>
-            Staff Portal
-          </div>
-        </div>
-
-        {/* Card */}
-        <div className="card-classic" style={{ padding: '2.5rem' }}>
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div>
-              <label style={{
-                display: 'block',
-                fontFamily: '"Libre Baskerville", Georgia, serif',
-                fontSize: '0.6rem',
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-                color: '#8b7355',
-                marginBottom: '0.5rem',
-              }}>
-                Admin Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => { setPassword(e.target.value); setError('') }}
-                placeholder="Enter password"
-                autoFocus
-                className="input-classic"
-                style={{ width: '100%', padding: '0.75rem 1rem', boxSizing: 'border-box' }}
-              />
-            </div>
-
-            {error && (
-              <p style={{
-                fontFamily: '"Crimson Text", Georgia, serif',
-                fontSize: '0.95rem',
-                color: '#8b1a1a',
-                fontStyle: 'italic',
-              }}>
-                {error}
-              </p>
-            )}
-
-            <button type="submit" className="btn-primary" style={{ padding: '0.85rem', width: '100%' }}>
-              Sign In
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── Status Badge ──
 function StatusBadge({ status }) {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.confirmed
   return (
@@ -123,7 +28,6 @@ function StatusBadge({ status }) {
   )
 }
 
-// ── Reservation Card ──
 function ReservationCard({ reservation, onStatusChange }) {
   const [updating, setUpdating] = useState(false)
 
@@ -135,8 +39,8 @@ function ReservationCard({ reservation, onStatusChange }) {
 
   const actions = {
     confirmed: [
-      { label: '✓ Mark as Seated', status: 'seated',  primary: true  },
-      { label: '✕ No Show',        status: 'no_show', primary: false },
+      { label: '✓ Mark as Seated', status: 'seated',    primary: true  },
+      { label: '✕ No Show',        status: 'no_show',   primary: false },
     ],
     seated:    [{ label: '↩ Unmark Seated', status: 'confirmed', primary: false }],
     no_show:   [{ label: '↩ Restore',       status: 'confirmed', primary: false }],
@@ -144,9 +48,8 @@ function ReservationCard({ reservation, onStatusChange }) {
   }
 
   const currentActions = actions[reservation.status] || []
-
-  const isNoShow    = reservation.status === 'no_show'
   const isSeated    = reservation.status === 'seated'
+  const isNoShow    = reservation.status === 'no_show'
   const isCancelled = reservation.status === 'cancelled'
 
   return (
@@ -154,70 +57,36 @@ function ReservationCard({ reservation, onStatusChange }) {
       background: isSeated ? 'rgba(90,138,58,0.05)' : '#f2ebda',
       border: `1px solid ${isNoShow ? 'rgba(139,26,26,0.2)' : isSeated ? 'rgba(90,138,58,0.25)' : 'rgba(139,115,85,0.25)'}`,
       padding: '1.25rem 1.5rem',
-      opacity: isCancelled || isNoShow ? 0.6 : 1,
+      opacity: isCancelled || isNoShow ? 0.65 : 1,
       transition: 'all 0.3s',
       position: 'relative',
     }}>
-      {/* Inner border accent */}
-      <div style={{
-        position: 'absolute',
-        inset: '3px',
-        border: '1px solid rgba(139,115,85,0.08)',
-        pointerEvents: 'none',
-      }} />
+      <div style={{ position: 'absolute', inset: '3px', border: '1px solid rgba(139,115,85,0.08)', pointerEvents: 'none' }} />
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '0.75rem' }}>
         <div>
-          {/* Name + badge */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem' }}>
-            <span style={{
-              fontFamily: '"Cormorant Garamond", Georgia, serif',
-              fontSize: '1.4rem',
-              fontWeight: 300,
-              color: '#2a1c0b',
-            }}>
+            <span style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: '1.4rem', fontWeight: 300, color: '#2a1c0b' }}>
               {reservation.name}
             </span>
             <StatusBadge status={reservation.status} />
           </div>
-
-          {/* Details row */}
-          <div style={{
-            fontFamily: '"Crimson Text", Georgia, serif',
-            fontSize: '0.95rem',
-            color: '#8b7355',
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '0.25rem 1.25rem',
-          }}>
+          <div style={{ fontFamily: '"Crimson Text", Georgia, serif', fontSize: '0.95rem', color: '#8b7355', display: 'flex', flexWrap: 'wrap', gap: '0.25rem 1.25rem' }}>
             <span>🕐 {reservation.time?.slice(0, 5)}</span>
             <span>👥 {reservation.guests} guest{reservation.guests !== '1' ? 's' : ''}</span>
             <span>📞 {reservation.phone}</span>
           </div>
         </div>
-
-        {/* ID + deposit */}
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <div style={{
-            fontFamily: '"Libre Baskerville", Georgia, serif',
-            fontSize: '0.5rem',
-            letterSpacing: '0.15em',
-            color: '#c4a882',
-            marginBottom: '0.3rem',
-          }}>
+          <div style={{ fontFamily: '"Libre Baskerville", Georgia, serif', fontSize: '0.5rem', letterSpacing: '0.15em', color: '#c4a882', marginBottom: '0.3rem' }}>
             #{reservation.id}
           </div>
-          <div style={{
-            fontFamily: '"Crimson Text", Georgia, serif',
-            fontSize: '0.9rem',
-            color: '#5a8a3a',
-          }}>
+          <div style={{ fontFamily: '"Crimson Text", Georgia, serif', fontSize: '0.9rem', color: '#5a8a3a' }}>
             TZS {Number(reservation.deposit_paid).toLocaleString()} ✓
           </div>
         </div>
       </div>
 
-      {/* Special notes */}
       {reservation.notes && (
         <div style={{
           background: 'rgba(154,122,58,0.06)',
@@ -234,7 +103,6 @@ function ReservationCard({ reservation, onStatusChange }) {
         </div>
       )}
 
-      {/* Action buttons */}
       {currentActions.length > 0 && (
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           {currentActions.map((action) => (
@@ -243,7 +111,7 @@ function ReservationCard({ reservation, onStatusChange }) {
               onClick={() => handleStatus(action.status)}
               disabled={updating}
               className={action.primary ? 'btn-primary' : 'btn-outline'}
-              style={{ padding: '0.5rem 1.25rem', fontSize: '0.6rem', opacity: updating ? 0.5 : 1 }}
+              style={{ padding: '0.5rem 1.25rem', opacity: updating ? 0.5 : 1 }}
             >
               {updating ? '...' : action.label}
             </button>
@@ -254,16 +122,15 @@ function ReservationCard({ reservation, onStatusChange }) {
   )
 }
 
-// ── Main Dashboard ──
 export default function Admin() {
-  const [loggedIn, setLoggedIn]       = useState(false)
-  const [date, setDate]               = useState(new Date().toISOString().split('T')[0])
+  const navigate = useNavigate()
+  const [date, setDate]                 = useState(new Date().toISOString().split('T')[0])
   const [reservations, setReservations] = useState([])
-  const [summary, setSummary]         = useState({})
-  const [loading, setLoading]         = useState(false)
-  const [error, setError]             = useState('')
+  const [summary, setSummary]           = useState({})
+  const [loading, setLoading]           = useState(false)
+  const [error, setError]               = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
-  const [lastRefresh, setLastRefresh] = useState(null)
+  const [lastRefresh, setLastRefresh]   = useState(null)
 
   const fetchReservations = useCallback(async () => {
     setLoading(true)
@@ -276,7 +143,10 @@ export default function Admin() {
         headers: { 'x-admin-password': ADMIN_PASSWORD },
       })
 
-      if (res.status === 401) { setLoggedIn(false); return }
+      if (res.status === 401) {
+        navigate('/admin/login')
+        return
+      }
 
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
@@ -289,30 +159,25 @@ export default function Admin() {
     } finally {
       setLoading(false)
     }
-  }, [date, filterStatus])
+  }, [date, filterStatus, navigate])
 
   useEffect(() => {
-    if (!loggedIn) return
     fetchReservations()
     const interval = setInterval(fetchReservations, 60000)
     return () => clearInterval(interval)
-  }, [loggedIn, fetchReservations])
+  }, [fetchReservations])
 
   const handleStatusChange = async (id, status) => {
     try {
       const res = await fetch('/api/reservations-update', {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-password': ADMIN_PASSWORD,
-        },
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': ADMIN_PASSWORD },
         body: JSON.stringify({ id, status }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
 
       setReservations((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)))
-
       setSummary((prev) => {
         const updated = { ...prev }
         const oldStatus = reservations.find((r) => r.id === id)?.status
@@ -325,57 +190,36 @@ export default function Admin() {
     }
   }
 
-  const filtered = filterStatus === 'all'
-    ? reservations
-    : reservations.filter((r) => r.status === filterStatus)
+  const handleSignOut = () => {
+    sessionStorage.removeItem('kaffeehaus_admin')
+    navigate('/admin/login')
+  }
 
-  if (!loggedIn) return <LoginScreen onLogin={() => setLoggedIn(true)} />
+  const filtered = filterStatus === 'all' ? reservations : reservations.filter((r) => r.status === filterStatus)
 
   const summaryItems = [
-    { key: 'total',     label: 'Total',     color: '#2a1c0b' },
-    { key: 'confirmed', label: 'Confirmed',  color: '#6b4c23' },
-    { key: 'seated',    label: 'Seated',     color: '#5a8a3a' },
-    { key: 'no_show',   label: 'No Shows',   color: '#8b1a1a' },
+    { key: 'total',     label: 'Total',    color: '#2a1c0b' },
+    { key: 'confirmed', label: 'Confirmed', color: '#6b4c23' },
+    { key: 'seated',    label: 'Seated',    color: '#5a8a3a' },
+    { key: 'no_show',   label: 'No Shows',  color: '#8b1a1a' },
   ]
-
-  const filterTabs = ['all', 'confirmed', 'seated', 'no_show', 'cancelled']
 
   return (
     <div style={{ minHeight: '100vh', background: '#faf6ed', color: '#2a1c0b' }}>
 
       {/* ── Header ── */}
-      <div style={{
-        borderBottom: '1px solid rgba(139,115,85,0.25)',
-        padding: '1rem 2rem',
-        background: '#f2ebda',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-      }}>
+      <div style={{ borderBottom: '1px solid rgba(139,115,85,0.25)', padding: '1rem 2rem', background: '#f2ebda', position: 'sticky', top: 0, zIndex: 50 }}>
         <div style={{ maxWidth: '960px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-
           <div>
-            <div style={{
-              fontFamily: '"Cormorant Garamond", Georgia, serif',
-              fontSize: '1.5rem',
-              fontWeight: 300,
-              color: '#2a1c0b',
-            }}>
+            <div style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: '1.5rem', fontWeight: 300, color: '#2a1c0b' }}>
               The Kaffeehaus
             </div>
-            <div style={{
-              fontFamily: '"Libre Baskerville", Georgia, serif',
-              fontSize: '0.5rem',
-              letterSpacing: '0.25em',
-              textTransform: 'uppercase',
-              color: '#9a7a3a',
-            }}>
+            <div style={{ fontFamily: '"Libre Baskerville", Georgia, serif', fontSize: '0.5rem', letterSpacing: '0.25em', textTransform: 'uppercase', color: '#9a7a3a' }}>
               Reservations Dashboard
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-            {/* Date picker */}
             <input
               type="date"
               value={date}
@@ -383,30 +227,12 @@ export default function Admin() {
               className="input-classic"
               style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem', colorScheme: 'light' }}
             />
-
-            {/* Refresh */}
-            <button
-              onClick={fetchReservations}
-              disabled={loading}
-              className="btn-outline"
-              style={{ padding: '0.5rem 1rem' }}
-            >
+            <button onClick={fetchReservations} disabled={loading} className="btn-outline" style={{ padding: '0.5rem 1rem' }}>
               {loading ? '...' : '↻ Refresh'}
             </button>
-
-            {/* Sign out */}
             <button
-              onClick={() => setLoggedIn(false)}
-              style={{
-                fontFamily: '"Libre Baskerville", Georgia, serif',
-                fontSize: '0.55rem',
-                letterSpacing: '0.15em',
-                textTransform: 'uppercase',
-                color: '#a08c6b',
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-              }}
+              onClick={handleSignOut}
+              style={{ fontFamily: '"Libre Baskerville", Georgia, serif', fontSize: '0.55rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#a08c6b', background: 'transparent', border: 'none', cursor: 'pointer' }}
             >
               Sign Out
             </button>
@@ -416,54 +242,37 @@ export default function Admin() {
 
       <div style={{ maxWidth: '960px', margin: '0 auto', padding: '2rem' }}>
 
-        {/* ── Summary cards ── */}
+        {/* Summary cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '2rem' }}>
           {summaryItems.map((s) => (
             <div key={s.key} className="card-classic" style={{ padding: '1.25rem', textAlign: 'center' }}>
-              <div style={{
-                fontFamily: '"Cormorant Garamond", Georgia, serif',
-                fontSize: '2.5rem',
-                fontWeight: 300,
-                color: s.color,
-                lineHeight: 1,
-                marginBottom: '0.4rem',
-              }}>
+              <div style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: '2.5rem', fontWeight: 300, color: s.color, lineHeight: 1, marginBottom: '0.4rem' }}>
                 {summary[s.key] || 0}
               </div>
-              <div style={{
-                fontFamily: '"Libre Baskerville", Georgia, serif',
-                fontSize: '0.5rem',
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-                color: '#a08c6b',
-              }}>
+              <div style={{ fontFamily: '"Libre Baskerville", Georgia, serif', fontSize: '0.5rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#a08c6b' }}>
                 {s.label}
               </div>
             </div>
           ))}
         </div>
 
-        {/* ── Filter tabs ── */}
+        {/* Filter tabs */}
         <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-          {filterTabs.map((s) => {
+          {['all', 'confirmed', 'seated', 'no_show', 'cancelled'].map((s) => {
             const isActive = filterStatus === s
             return (
-              <button
-                key={s}
-                onClick={() => setFilterStatus(s)}
-                style={{
-                  fontFamily: '"Libre Baskerville", Georgia, serif',
-                  fontSize: '0.5rem',
-                  letterSpacing: '0.15em',
-                  textTransform: 'uppercase',
-                  padding: '0.4rem 0.9rem',
-                  border: `1px solid ${isActive ? 'rgba(107,76,35,0.6)' : 'rgba(139,115,85,0.25)'}`,
-                  background: isActive ? 'rgba(107,76,35,0.08)' : 'transparent',
-                  color: isActive ? '#6b4c23' : '#a08c6b',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-              >
+              <button key={s} onClick={() => setFilterStatus(s)} style={{
+                fontFamily: '"Libre Baskerville", Georgia, serif',
+                fontSize: '0.5rem',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                padding: '0.4rem 0.9rem',
+                border: `1px solid ${isActive ? 'rgba(107,76,35,0.6)' : 'rgba(139,115,85,0.25)'}`,
+                background: isActive ? 'rgba(107,76,35,0.08)' : 'transparent',
+                color: isActive ? '#6b4c23' : '#a08c6b',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}>
                 {s === 'all' ? 'All' : s === 'no_show' ? 'No Show' : s.charAt(0).toUpperCase() + s.slice(1)}
                 {s !== 'all' && summary[s] ? ` (${summary[s]})` : ''}
               </button>
@@ -471,96 +280,39 @@ export default function Admin() {
           })}
         </div>
 
-        {/* Last refresh */}
         {lastRefresh && (
-          <p style={{
-            fontFamily: '"Crimson Text", Georgia, serif',
-            fontSize: '0.85rem',
-            fontStyle: 'italic',
-            color: '#c4a882',
-            marginBottom: '1rem',
-          }}>
+          <p style={{ fontFamily: '"Crimson Text", Georgia, serif', fontSize: '0.85rem', fontStyle: 'italic', color: '#c4a882', marginBottom: '1rem' }}>
             Last refreshed: {lastRefresh.toLocaleTimeString()} · Auto-refreshes every 60s
           </p>
         )}
 
-        {/* ── Ornamental divider ── */}
         <div className="section-divider" style={{ marginBottom: '1.5rem' }} />
 
-        {/* ── Error ── */}
         {error && (
-          <div style={{
-            background: 'rgba(139,26,26,0.05)',
-            border: '1px solid rgba(139,26,26,0.2)',
-            padding: '1rem',
-            marginBottom: '1rem',
-            fontFamily: '"Crimson Text", Georgia, serif',
-            fontSize: '1rem',
-            color: '#8b1a1a',
-            fontStyle: 'italic',
-          }}>
+          <div style={{ background: 'rgba(139,26,26,0.05)', border: '1px solid rgba(139,26,26,0.2)', padding: '1rem', marginBottom: '1rem', fontFamily: '"Crimson Text", Georgia, serif', fontSize: '1rem', color: '#8b1a1a', fontStyle: 'italic' }}>
             {error}
           </div>
         )}
 
-        {/* ── Reservations list ── */}
         {loading && reservations.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '5rem 0' }}>
-            <div style={{
-              fontFamily: '"Cormorant Garamond", Georgia, serif',
-              fontSize: '2rem',
-              color: '#c4a882',
-              marginBottom: '0.75rem',
-              animation: 'pulse 2s infinite',
-            }}>
-              ✦
-            </div>
-            <p style={{
-              fontFamily: '"Crimson Text", Georgia, serif',
-              fontSize: '1rem',
-              fontStyle: 'italic',
-              color: '#a08c6b',
-            }}>
-              Loading reservations...
-            </p>
+            <div style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: '2rem', color: '#c4a882', marginBottom: '0.75rem' }}>✦</div>
+            <p style={{ fontFamily: '"Crimson Text", Georgia, serif', fontSize: '1rem', fontStyle: 'italic', color: '#a08c6b' }}>Loading reservations...</p>
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{
-            textAlign: 'center',
-            padding: '5rem 0',
-            border: '1px solid rgba(139,115,85,0.2)',
-          }}>
-            <div style={{
-              fontFamily: '"Cormorant Garamond", Georgia, serif',
-              fontSize: '2.5rem',
-              color: '#c4a882',
-              marginBottom: '0.75rem',
-            }}>
-              ◇
-            </div>
-            <p style={{
-              fontFamily: '"Crimson Text", Georgia, serif',
-              fontSize: '1.1rem',
-              fontStyle: 'italic',
-              color: '#a08c6b',
-            }}>
-              {reservations.length === 0
-                ? `No reservations for ${date}`
-                : `No ${filterStatus.replace('_', ' ')} reservations`}
+          <div style={{ textAlign: 'center', padding: '5rem 0', border: '1px solid rgba(139,115,85,0.2)' }}>
+            <div style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: '2.5rem', color: '#c4a882', marginBottom: '0.75rem' }}>◇</div>
+            <p style={{ fontFamily: '"Crimson Text", Georgia, serif', fontSize: '1.1rem', fontStyle: 'italic', color: '#a08c6b' }}>
+              {reservations.length === 0 ? `No reservations for ${date}` : `No ${filterStatus.replace('_', ' ')} reservations`}
             </p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {filtered.map((r) => (
-              <ReservationCard
-                key={r.id}
-                reservation={r}
-                onStatusChange={handleStatusChange}
-              />
+              <ReservationCard key={r.id} reservation={r} onStatusChange={handleStatusChange} />
             ))}
           </div>
         )}
-
       </div>
     </div>
   )
