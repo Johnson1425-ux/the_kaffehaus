@@ -52,7 +52,7 @@ export default async function handler(req, res) {
     const normalizedPhone = phone
       .replace(/\s+/g, '')
       .replace(/^\+/, '')
-      .replace(/^0/, '255')
+      .replace(/^0/, '254')
 
     const stkPayload = {
       BusinessShortCode: shortCode,

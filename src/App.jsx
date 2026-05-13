@@ -5,6 +5,7 @@ import Menu from './components/Menu.jsx'
 import Ambience from './components/Ambience.jsx'
 import Reviews from './components/Reviews.jsx'
 import Reserve from './components/Reserve.jsx'
+import Admin from './components/Admin.jsx'
 import Footer from './components/Footer.jsx'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 
@@ -18,6 +19,7 @@ export default function App() {
       <Ambience />
       <Reviews />
       <Reserve />
+      <Admin />
       <Footer />
       <SpeedInsights />
     </div>

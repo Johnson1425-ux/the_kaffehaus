@@ -99,6 +99,31 @@ export default function Reserve() {
     }, 80)
   }
 
+  // Called by MPesaPayment when payment is confirmed
+  // Saves reservation to Neon DB + triggers SMS to customer & restaurant
+  const handlePaymentComplete = async (checkoutId) => {
+    try {
+      await fetch('/api/reservations-create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          phone: form.phone,
+          date: form.date,
+          time: form.time,
+          guests: form.guests,
+          notes: form.notes,
+          checkoutId,
+          depositPaid: DEPOSIT,
+        }),
+      })
+    } catch (err) {
+      // Don't block the UI — reservation saves in background
+      console.error('Failed to save reservation:', err)
+    }
+    setStep(3)
+  }
+
   return (
     <section id="reserve" className="py-28 px-6 relative" style={{ background: '#faf6ed' }}>
 
@@ -153,9 +178,9 @@ export default function Reserve() {
               Accepted:
             </span>
             {[
-              { label: 'M-PESA', bg: 'rgba(227,24,55,0.06)', border: 'rgba(227,24,55,0.25)', color: '#8b1a1a' },
-              { label: 'CASH', bg: 'rgba(139,115,85,0.08)', border: 'rgba(139,115,85,0.25)', color: '#6b4c23' },
-              { label: 'TIGOPESA', bg: 'rgba(37,99,185,0.06)', border: 'rgba(37,99,185,0.2)', color: '#1a3a6b' },
+              { label: 'M-PESA',   bg: 'rgba(227,24,55,0.06)',   border: 'rgba(227,24,55,0.25)',  color: '#8b1a1a' },
+              { label: 'CASH',     bg: 'rgba(139,115,85,0.08)',  border: 'rgba(139,115,85,0.25)', color: '#6b4c23' },
+              { label: 'TIGOPESA', bg: 'rgba(37,99,185,0.06)',   border: 'rgba(37,99,185,0.2)',   color: '#1a3a6b' },
             ].map(b => (
               <span key={b.label} style={{
                 fontFamily: '"Libre Baskerville", Georgia, serif',
@@ -213,7 +238,7 @@ export default function Reserve() {
                 <label style={labelStyle}>Time</label>
                 <select required value={form.time}
                   onChange={e => setForm({ ...form, time: e.target.value })}
-                  style={{ ...inputStyle, cursor: 'pointer' }}
+                  style={inputStyle}
                   onFocus={e => e.target.style.borderColor = '#9a7a3a'}
                   onBlur={e => e.target.style.borderColor = 'rgba(139,115,85,0.3)'}
                 >
@@ -281,7 +306,7 @@ export default function Reserve() {
                 lineHeight: 1.5,
                 margin: 0,
               }}>
-                A <strong style={{ color: '#5a8a3a', fontWeight: 600 }}>TZS {DEPOSIT.toLocaleString()} M-Pesa deposit</strong> is required to hold your table. It will be deducted from your final bill.
+                A <strong style={{ color: '#5a8a3a', fontWeight: 600 }}>TZS {DEPOSIT.toLocaleString()} M-Pesa deposit</strong> is required to hold your table. It will be deducted from your final bill. You'll receive an SMS confirmation.
               </p>
             </div>
 
@@ -303,7 +328,11 @@ export default function Reserve() {
 
         {/* ── STEP 2 ── */}
         {step === 2 && (
-          <MPesaPayment reservation={form} onBack={() => setStep(1)} onComplete={() => setStep(3)} />
+          <MPesaPayment
+            reservation={form}
+            onBack={() => setStep(1)}
+            onComplete={handlePaymentComplete}
+          />
         )}
 
         {/* ── STEP 3 ── */}
@@ -383,7 +412,7 @@ export default function Reserve() {
                 fontStyle: 'italic',
                 color: '#a08c6b',
               }}>
-                A confirmation SMS has been sent to {form.phone}. We look forward to welcoming you.
+                An SMS confirmation has been sent to {form.phone}. We look forward to welcoming you.
               </p>
 
               <button
