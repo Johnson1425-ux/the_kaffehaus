@@ -3,12 +3,13 @@ import { useState, useEffect, useCallback } from 'react'
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'marist22'
 
 const STATUS_CONFIG = {
-  confirmed: { label: 'Confirmed', color: 'text-blue-400',   bg: 'bg-blue-950/40',  border: 'border-blue-800/40'  },
-  seated:    { label: 'Seated',    color: 'text-emerald-400', bg: 'bg-emerald-950/40', border: 'border-emerald-800/40' },
-  no_show:   { label: 'No Show',   color: 'text-red-400',    bg: 'bg-red-950/40',   border: 'border-red-800/40'   },
-  cancelled: { label: 'Cancelled', color: 'text-stone-500',  bg: 'bg-stone-900/40', border: 'border-stone-800'    },
+  confirmed: { label: 'Confirmed', color: '#6b4c23', bg: 'rgba(107,76,35,0.08)',  border: 'rgba(107,76,35,0.3)'  },
+  seated:    { label: 'Seated',    color: '#5a8a3a', bg: 'rgba(90,138,58,0.08)',  border: 'rgba(90,138,58,0.3)'  },
+  no_show:   { label: 'No Show',   color: '#8b1a1a', bg: 'rgba(139,26,26,0.06)', border: 'rgba(139,26,26,0.25)' },
+  cancelled: { label: 'Cancelled', color: '#a08c6b', bg: 'rgba(160,140,107,0.06)', border: 'rgba(160,140,107,0.25)' },
 }
 
+// ── Login ──
 function LoginScreen({ onLogin }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -18,60 +19,112 @@ function LoginScreen({ onLogin }) {
     if (password === ADMIN_PASSWORD) {
       onLogin()
     } else {
-      setError('Incorrect password')
+      setError('Incorrect password. Please try again.')
       setPassword('')
     }
   }
 
   return (
-    <div className="min-h-screen bg-charcoal-900 flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-10">
-          <div className="font-serif text-3xl text-gradient-gold mb-2">The Kaffeehaus</div>
-          <p className="font-sans text-xs tracking-[0.25em] uppercase text-stone-500">Staff Portal</p>
+    <div style={{
+      minHeight: '100vh',
+      background: '#faf6ed',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '1.5rem',
+    }}>
+      <div style={{ width: '100%', maxWidth: '380px' }}>
+
+        {/* Brand */}
+        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <div style={{
+            fontFamily: '"Cormorant Garamond", Georgia, serif',
+            fontSize: '2rem',
+            fontWeight: 300,
+            color: '#2a1c0b',
+            marginBottom: '0.25rem',
+          }}>
+            The Kaffeehaus
+          </div>
+          <div style={{
+            fontFamily: '"Libre Baskerville", Georgia, serif',
+            fontSize: '0.55rem',
+            letterSpacing: '0.3em',
+            textTransform: 'uppercase',
+            color: '#9a7a3a',
+          }}>
+            Staff Portal
+          </div>
         </div>
 
-        <form onSubmit={handleLogin} className="glass-card p-8 rounded-sm space-y-5">
-          <div>
-            <label className="block font-sans text-[10px] tracking-[0.2em] uppercase text-stone-500 mb-2">
-              Admin Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => { setPassword(e.target.value); setError('') }}
-              placeholder="Enter password"
-              className="w-full bg-transparent border border-gold-500/20 px-4 py-3 font-sans text-sm text-stone-200 placeholder-stone-700 focus:outline-none focus:border-gold-500/50 rounded-sm transition-colors"
-              autoFocus
-            />
-          </div>
+        {/* Card */}
+        <div className="card-classic" style={{ padding: '2.5rem' }}>
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div>
+              <label style={{
+                display: 'block',
+                fontFamily: '"Libre Baskerville", Georgia, serif',
+                fontSize: '0.6rem',
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                color: '#8b7355',
+                marginBottom: '0.5rem',
+              }}>
+                Admin Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => { setPassword(e.target.value); setError('') }}
+                placeholder="Enter password"
+                autoFocus
+                className="input-classic"
+                style={{ width: '100%', padding: '0.75rem 1rem', boxSizing: 'border-box' }}
+              />
+            </div>
 
-          {error && (
-            <p className="font-sans text-xs text-red-400">{error}</p>
-          )}
+            {error && (
+              <p style={{
+                fontFamily: '"Crimson Text", Georgia, serif',
+                fontSize: '0.95rem',
+                color: '#8b1a1a',
+                fontStyle: 'italic',
+              }}>
+                {error}
+              </p>
+            )}
 
-          <button
-            type="submit"
-            className="w-full py-3 bg-gold-500 text-charcoal-900 font-sans font-semibold text-xs tracking-[0.2em] uppercase hover:bg-gold-400 transition-all duration-300 rounded-sm"
-          >
-            Sign In
-          </button>
-        </form>
+            <button type="submit" className="btn-primary" style={{ padding: '0.85rem', width: '100%' }}>
+              Sign In
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   )
 }
 
+// ── Status Badge ──
 function StatusBadge({ status }) {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.confirmed
   return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-sm font-sans text-[10px] tracking-[0.15em] uppercase font-medium ${cfg.color} ${cfg.bg} border ${cfg.border}`}>
+    <span style={{
+      fontFamily: '"Libre Baskerville", Georgia, serif',
+      fontSize: '0.5rem',
+      letterSpacing: '0.15em',
+      textTransform: 'uppercase',
+      color: cfg.color,
+      background: cfg.bg,
+      border: `1px solid ${cfg.border}`,
+      padding: '0.25rem 0.6rem',
+    }}>
       {cfg.label}
     </span>
   )
 }
 
-function ReservationCard({ reservation, onStatusChange, loading }) {
+// ── Reservation Card ──
+function ReservationCard({ reservation, onStatusChange }) {
   const [updating, setUpdating] = useState(false)
 
   const handleStatus = async (newStatus) => {
@@ -82,60 +135,115 @@ function ReservationCard({ reservation, onStatusChange, loading }) {
 
   const actions = {
     confirmed: [
-      { label: '✓ Mark Seated', status: 'seated',    style: 'bg-emerald-700 hover:bg-emerald-600 text-white' },
-      { label: '✕ No Show',     status: 'no_show',   style: 'bg-red-900/60 hover:bg-red-800 text-red-300 border border-red-800/50' },
+      { label: '✓ Mark as Seated', status: 'seated',  primary: true  },
+      { label: '✕ No Show',        status: 'no_show', primary: false },
     ],
-    seated: [
-      { label: '↩ Unmark',      status: 'confirmed', style: 'bg-stone-800 hover:bg-stone-700 text-stone-300' },
-    ],
-    no_show: [
-      { label: '↩ Restore',     status: 'confirmed', style: 'bg-stone-800 hover:bg-stone-700 text-stone-300' },
-    ],
+    seated:    [{ label: '↩ Unmark Seated', status: 'confirmed', primary: false }],
+    no_show:   [{ label: '↩ Restore',       status: 'confirmed', primary: false }],
     cancelled: [],
   }
 
   const currentActions = actions[reservation.status] || []
 
+  const isNoShow    = reservation.status === 'no_show'
+  const isSeated    = reservation.status === 'seated'
+  const isCancelled = reservation.status === 'cancelled'
+
   return (
-    <div className={`border rounded-sm p-5 transition-all duration-300 ${
-      reservation.status === 'seated'  ? 'border-emerald-800/40 bg-emerald-950/10' :
-      reservation.status === 'no_show' ? 'border-red-800/30 bg-red-950/10 opacity-60' :
-      reservation.status === 'cancelled' ? 'border-stone-800 opacity-40' :
-      'border-gold-500/15 bg-stone-900/20'
-    }`}>
-      <div className="flex items-start justify-between gap-3 mb-4">
+    <div style={{
+      background: isSeated ? 'rgba(90,138,58,0.05)' : '#f2ebda',
+      border: `1px solid ${isNoShow ? 'rgba(139,26,26,0.2)' : isSeated ? 'rgba(90,138,58,0.25)' : 'rgba(139,115,85,0.25)'}`,
+      padding: '1.25rem 1.5rem',
+      opacity: isCancelled || isNoShow ? 0.6 : 1,
+      transition: 'all 0.3s',
+      position: 'relative',
+    }}>
+      {/* Inner border accent */}
+      <div style={{
+        position: 'absolute',
+        inset: '3px',
+        border: '1px solid rgba(139,115,85,0.08)',
+        pointerEvents: 'none',
+      }} />
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '0.75rem' }}>
         <div>
-          <div className="flex items-center gap-2.5 mb-1">
-            <span className="font-serif text-lg text-stone-100">{reservation.name}</span>
+          {/* Name + badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem' }}>
+            <span style={{
+              fontFamily: '"Cormorant Garamond", Georgia, serif',
+              fontSize: '1.4rem',
+              fontWeight: 300,
+              color: '#2a1c0b',
+            }}>
+              {reservation.name}
+            </span>
             <StatusBadge status={reservation.status} />
           </div>
-          <div className="flex flex-wrap gap-x-4 gap-y-1 font-sans text-xs text-stone-500">
+
+          {/* Details row */}
+          <div style={{
+            fontFamily: '"Crimson Text", Georgia, serif',
+            fontSize: '0.95rem',
+            color: '#8b7355',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '0.25rem 1.25rem',
+          }}>
             <span>🕐 {reservation.time?.slice(0, 5)}</span>
             <span>👥 {reservation.guests} guest{reservation.guests !== '1' ? 's' : ''}</span>
             <span>📞 {reservation.phone}</span>
           </div>
         </div>
-        <div className="text-right flex-shrink-0">
-          <div className="font-sans text-[10px] text-stone-600 mb-1">#{reservation.id}</div>
-          <div className="font-sans text-xs text-emerald-500">TZS {Number(reservation.deposit_paid).toLocaleString()} ✓</div>
+
+        {/* ID + deposit */}
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <div style={{
+            fontFamily: '"Libre Baskerville", Georgia, serif',
+            fontSize: '0.5rem',
+            letterSpacing: '0.15em',
+            color: '#c4a882',
+            marginBottom: '0.3rem',
+          }}>
+            #{reservation.id}
+          </div>
+          <div style={{
+            fontFamily: '"Crimson Text", Georgia, serif',
+            fontSize: '0.9rem',
+            color: '#5a8a3a',
+          }}>
+            TZS {Number(reservation.deposit_paid).toLocaleString()} ✓
+          </div>
         </div>
       </div>
 
+      {/* Special notes */}
       {reservation.notes && (
-        <div className="mb-4 px-3 py-2 bg-amber-950/20 border border-amber-900/20 rounded-sm">
-          <span className="font-sans text-[10px] text-amber-400/70 tracking-wider uppercase">Note: </span>
-          <span className="font-sans text-xs text-stone-400">{reservation.notes}</span>
+        <div style={{
+          background: 'rgba(154,122,58,0.06)',
+          border: '1px solid rgba(154,122,58,0.2)',
+          padding: '0.5rem 0.75rem',
+          marginBottom: '0.75rem',
+          fontFamily: '"Crimson Text", Georgia, serif',
+          fontSize: '0.95rem',
+          fontStyle: 'italic',
+          color: '#6b4c23',
+        }}>
+          <span style={{ fontStyle: 'normal', fontFamily: '"Libre Baskerville", Georgia, serif', fontSize: '0.5rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#9a7a3a', marginRight: '0.5rem' }}>Note:</span>
+          {reservation.notes}
         </div>
       )}
 
+      {/* Action buttons */}
       {currentActions.length > 0 && (
-        <div className="flex gap-2 flex-wrap">
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           {currentActions.map((action) => (
             <button
               key={action.status}
               onClick={() => handleStatus(action.status)}
-              disabled={updating || loading}
-              className={`px-4 py-2 font-sans text-xs tracking-wider rounded-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${action.style}`}
+              disabled={updating}
+              className={action.primary ? 'btn-primary' : 'btn-outline'}
+              style={{ padding: '0.5rem 1.25rem', fontSize: '0.6rem', opacity: updating ? 0.5 : 1 }}
             >
               {updating ? '...' : action.label}
             </button>
@@ -146,13 +254,14 @@ function ReservationCard({ reservation, onStatusChange, loading }) {
   )
 }
 
+// ── Main Dashboard ──
 export default function Admin() {
-  const [loggedIn, setLoggedIn] = useState(false)
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const [loggedIn, setLoggedIn]       = useState(false)
+  const [date, setDate]               = useState(new Date().toISOString().split('T')[0])
   const [reservations, setReservations] = useState([])
-  const [summary, setSummary] = useState({})
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [summary, setSummary]         = useState({})
+  const [loading, setLoading]         = useState(false)
+  const [error, setError]             = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [lastRefresh, setLastRefresh] = useState(null)
 
@@ -167,10 +276,7 @@ export default function Admin() {
         headers: { 'x-admin-password': ADMIN_PASSWORD },
       })
 
-      if (res.status === 401) {
-        setLoggedIn(false)
-        return
-      }
+      if (res.status === 401) { setLoggedIn(false); return }
 
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
@@ -185,7 +291,6 @@ export default function Admin() {
     }
   }, [date, filterStatus])
 
-  // Auto-refresh every 60 seconds
   useEffect(() => {
     if (!loggedIn) return
     fetchReservations()
@@ -203,21 +308,16 @@ export default function Admin() {
         },
         body: JSON.stringify({ id, status }),
       })
-
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
 
-      // Update local state immediately
-      setReservations((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, status } : r))
-      )
+      setReservations((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)))
 
-      // Update summary counts
       setSummary((prev) => {
         const updated = { ...prev }
         const oldStatus = reservations.find((r) => r.id === id)?.status
-        if (oldStatus && updated[oldStatus]) updated[oldStatus] = String(Number(updated[oldStatus]) - 1)
-        if (updated[status] !== undefined) updated[status] = String(Number(updated[status]) + 1)
+        if (oldStatus) updated[oldStatus] = String(Math.max(0, Number(updated[oldStatus]) - 1))
+        updated[status] = String(Number(updated[status] || 0) + 1)
         return updated
       })
     } catch (err) {
@@ -231,40 +331,82 @@ export default function Admin() {
 
   if (!loggedIn) return <LoginScreen onLogin={() => setLoggedIn(true)} />
 
-  return (
-    <div className="min-h-screen bg-charcoal-900 text-stone-100">
+  const summaryItems = [
+    { key: 'total',     label: 'Total',     color: '#2a1c0b' },
+    { key: 'confirmed', label: 'Confirmed',  color: '#6b4c23' },
+    { key: 'seated',    label: 'Seated',     color: '#5a8a3a' },
+    { key: 'no_show',   label: 'No Shows',   color: '#8b1a1a' },
+  ]
 
-      {/* Header */}
-      <div className="border-b border-gold-500/10 px-6 py-4 bg-charcoal-900/95 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+  const filterTabs = ['all', 'confirmed', 'seated', 'no_show', 'cancelled']
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#faf6ed', color: '#2a1c0b' }}>
+
+      {/* ── Header ── */}
+      <div style={{
+        borderBottom: '1px solid rgba(139,115,85,0.25)',
+        padding: '1rem 2rem',
+        background: '#f2ebda',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+      }}>
+        <div style={{ maxWidth: '960px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+
           <div>
-            <div className="font-serif text-xl text-gradient-gold">The Kaffeehaus</div>
-            <p className="font-sans text-[10px] tracking-[0.2em] uppercase text-stone-600">Reservations Dashboard</p>
+            <div style={{
+              fontFamily: '"Cormorant Garamond", Georgia, serif',
+              fontSize: '1.5rem',
+              fontWeight: 300,
+              color: '#2a1c0b',
+            }}>
+              The Kaffeehaus
+            </div>
+            <div style={{
+              fontFamily: '"Libre Baskerville", Georgia, serif',
+              fontSize: '0.5rem',
+              letterSpacing: '0.25em',
+              textTransform: 'uppercase',
+              color: '#9a7a3a',
+            }}>
+              Reservations Dashboard
+            </div>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             {/* Date picker */}
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="bg-stone-900 border border-stone-800 px-3 py-2 font-sans text-sm text-stone-300 focus:outline-none focus:border-gold-500/50 rounded-sm"
-              style={{ colorScheme: 'dark' }}
+              className="input-classic"
+              style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem', colorScheme: 'light' }}
             />
 
             {/* Refresh */}
             <button
               onClick={fetchReservations}
               disabled={loading}
-              className="px-4 py-2 border border-stone-800 text-stone-400 hover:border-gold-500/40 hover:text-gold-400 font-sans text-xs tracking-wider rounded-sm transition-all duration-200 disabled:opacity-50"
+              className="btn-outline"
+              style={{ padding: '0.5rem 1rem' }}
             >
               {loading ? '...' : '↻ Refresh'}
             </button>
 
-            {/* Logout */}
+            {/* Sign out */}
             <button
               onClick={() => setLoggedIn(false)}
-              className="px-4 py-2 font-sans text-xs text-stone-600 hover:text-stone-400 tracking-wider rounded-sm transition-colors"
+              style={{
+                fontFamily: '"Libre Baskerville", Georgia, serif',
+                fontSize: '0.55rem',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                color: '#a08c6b',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+              }}
             >
               Sign Out
             </button>
@@ -272,86 +414,153 @@ export default function Admin() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div style={{ maxWidth: '960px', margin: '0 auto', padding: '2rem' }}>
 
-        {/* Summary cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-          {[
-            { key: 'total',     label: 'Total',     color: 'text-stone-300'  },
-            { key: 'confirmed', label: 'Confirmed',  color: 'text-blue-400'   },
-            { key: 'seated',    label: 'Seated',     color: 'text-emerald-400'},
-            { key: 'no_show',   label: 'No Shows',   color: 'text-red-400'    },
-          ].map((s) => (
-            <div key={s.key} className="border border-gold-500/10 p-4 rounded-sm text-center">
-              <div className={`font-serif text-3xl mb-1 ${s.color}`}>
+        {/* ── Summary cards ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '2rem' }}>
+          {summaryItems.map((s) => (
+            <div key={s.key} className="card-classic" style={{ padding: '1.25rem', textAlign: 'center' }}>
+              <div style={{
+                fontFamily: '"Cormorant Garamond", Georgia, serif',
+                fontSize: '2.5rem',
+                fontWeight: 300,
+                color: s.color,
+                lineHeight: 1,
+                marginBottom: '0.4rem',
+              }}>
                 {summary[s.key] || 0}
               </div>
-              <div className="font-sans text-[10px] tracking-[0.2em] uppercase text-stone-600">
+              <div style={{
+                fontFamily: '"Libre Baskerville", Georgia, serif',
+                fontSize: '0.5rem',
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                color: '#a08c6b',
+              }}>
                 {s.label}
               </div>
             </div>
           ))}
         </div>
 
-        {/* Filter tabs */}
-        <div className="flex gap-2 flex-wrap mb-6">
-          {['all', 'confirmed', 'seated', 'no_show', 'cancelled'].map((s) => (
-            <button
-              key={s}
-              onClick={() => setFilterStatus(s)}
-              className={`px-4 py-2 font-sans text-[10px] tracking-[0.15em] uppercase border rounded-sm transition-all duration-200 ${
-                filterStatus === s
-                  ? 'border-gold-500 text-gold-400 bg-gold-500/8'
-                  : 'border-stone-800 text-stone-600 hover:border-stone-700 hover:text-stone-400'
-              }`}
-            >
-              {s === 'all' ? 'All' : s === 'no_show' ? 'No Show' : s.charAt(0).toUpperCase() + s.slice(1)}
-              {s !== 'all' && summary[s] ? ` (${summary[s]})` : ''}
-            </button>
-          ))}
+        {/* ── Filter tabs ── */}
+        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+          {filterTabs.map((s) => {
+            const isActive = filterStatus === s
+            return (
+              <button
+                key={s}
+                onClick={() => setFilterStatus(s)}
+                style={{
+                  fontFamily: '"Libre Baskerville", Georgia, serif',
+                  fontSize: '0.5rem',
+                  letterSpacing: '0.15em',
+                  textTransform: 'uppercase',
+                  padding: '0.4rem 0.9rem',
+                  border: `1px solid ${isActive ? 'rgba(107,76,35,0.6)' : 'rgba(139,115,85,0.25)'}`,
+                  background: isActive ? 'rgba(107,76,35,0.08)' : 'transparent',
+                  color: isActive ? '#6b4c23' : '#a08c6b',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {s === 'all' ? 'All' : s === 'no_show' ? 'No Show' : s.charAt(0).toUpperCase() + s.slice(1)}
+                {s !== 'all' && summary[s] ? ` (${summary[s]})` : ''}
+              </button>
+            )
+          })}
         </div>
 
         {/* Last refresh */}
         {lastRefresh && (
-          <p className="font-sans text-[10px] text-stone-700 mb-4 tracking-wider">
+          <p style={{
+            fontFamily: '"Crimson Text", Georgia, serif',
+            fontSize: '0.85rem',
+            fontStyle: 'italic',
+            color: '#c4a882',
+            marginBottom: '1rem',
+          }}>
             Last refreshed: {lastRefresh.toLocaleTimeString()} · Auto-refreshes every 60s
           </p>
         )}
 
-        {/* Error */}
+        {/* ── Ornamental divider ── */}
+        <div className="section-divider" style={{ marginBottom: '1.5rem' }} />
+
+        {/* ── Error ── */}
         {error && (
-          <div className="border border-red-900/40 bg-red-950/20 p-4 rounded-sm mb-6">
-            <p className="font-sans text-xs text-red-400">{error}</p>
+          <div style={{
+            background: 'rgba(139,26,26,0.05)',
+            border: '1px solid rgba(139,26,26,0.2)',
+            padding: '1rem',
+            marginBottom: '1rem',
+            fontFamily: '"Crimson Text", Georgia, serif',
+            fontSize: '1rem',
+            color: '#8b1a1a',
+            fontStyle: 'italic',
+          }}>
+            {error}
           </div>
         )}
 
-        {/* Reservations list */}
+        {/* ── Reservations list ── */}
         {loading && reservations.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="w-8 h-8 border border-stone-700 border-t-gold-500 rounded-full animate-spin mx-auto mb-4" />
-            <p className="font-sans text-xs text-stone-600 tracking-wider">Loading reservations...</p>
+          <div style={{ textAlign: 'center', padding: '5rem 0' }}>
+            <div style={{
+              fontFamily: '"Cormorant Garamond", Georgia, serif',
+              fontSize: '2rem',
+              color: '#c4a882',
+              marginBottom: '0.75rem',
+              animation: 'pulse 2s infinite',
+            }}>
+              ✦
+            </div>
+            <p style={{
+              fontFamily: '"Crimson Text", Georgia, serif',
+              fontSize: '1rem',
+              fontStyle: 'italic',
+              color: '#a08c6b',
+            }}>
+              Loading reservations...
+            </p>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-20 border border-stone-800 rounded-sm">
-            <div className="font-serif text-4xl text-stone-800 mb-3">◇</div>
-            <p className="font-sans text-sm text-stone-600">
+          <div style={{
+            textAlign: 'center',
+            padding: '5rem 0',
+            border: '1px solid rgba(139,115,85,0.2)',
+          }}>
+            <div style={{
+              fontFamily: '"Cormorant Garamond", Georgia, serif',
+              fontSize: '2.5rem',
+              color: '#c4a882',
+              marginBottom: '0.75rem',
+            }}>
+              ◇
+            </div>
+            <p style={{
+              fontFamily: '"Crimson Text", Georgia, serif',
+              fontSize: '1.1rem',
+              fontStyle: 'italic',
+              color: '#a08c6b',
+            }}>
               {reservations.length === 0
                 ? `No reservations for ${date}`
-                : `No ${filterStatus} reservations`}
+                : `No ${filterStatus.replace('_', ' ')} reservations`}
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {filtered.map((r) => (
               <ReservationCard
                 key={r.id}
                 reservation={r}
                 onStatusChange={handleStatusChange}
-                loading={loading}
               />
             ))}
           </div>
         )}
+
       </div>
     </div>
   )
